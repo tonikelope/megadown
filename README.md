@@ -12,5 +12,5 @@ Dependencies:
 If you have a link list you can download with:
 
 ```
-$ < list.txt xargs -l bash /path/to/megadown.sh
+$ < /path/to/link/list.txt xargs -I % /path/to/megadown.sh %
 ```
