@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.3"
+VERSION="1.4"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -78,7 +78,7 @@ else
 		
 		mega_res_json=$(curl -s -X POST --data-binary "$mega_req_json" "$mega_req_url")
 		
-		if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]\]') ]
+		if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]
 		then
 			error_code=$(echo -n "$mega_res_json" | perl -pe "s/^.*\[(.*?)\].*$/\1/s")
 			echo -e "\nMEGA ERROR: $error_code\n" 1>&2
