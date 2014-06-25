@@ -12,7 +12,9 @@ Dependencies:
 Example:
 
 ```
-$ /path/to/megadown.sh 'http://megacrypter.com/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!12345678'
+$ /path/to/megadown.sh 'https://mega.co.nz/#!xxxxxxxxxx!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+
+$ /path/to/megadown.sh 'http://megacrypter.com/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
 ```
 
 If you have a link list you can download with:
