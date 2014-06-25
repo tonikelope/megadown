@@ -9,7 +9,7 @@ Dependencies:
 * perl
 * pv
 
-Example:
+Example (remember chmod u+x):
 
 ```
 $ /path/to/megadown.sh 'https://mega.co.nz/#!xxxxxxxxxx!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
@@ -17,7 +17,7 @@ $ /path/to/megadown.sh 'https://mega.co.nz/#!xxxxxxxxxx!xxxxxxxxxxxxxxxxxxxxxxxx
 $ /path/to/megadown.sh 'http://megacrypter.com/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
 ```
 
-If you have a link list you can download with:
+If you have a link list you can download it with:
 
 ```
 $ < /path/to/link/list.txt xargs -I % /path/to/megadown.sh %
