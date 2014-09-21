@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.5.1"
+VERSION="1.5.2"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -94,7 +94,7 @@ else
 			
 			if [ $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]
 			then
-				file_name=$(json_param "$(echo -n $(b64_pad "$at") | $OPENSSL_AES_CBC_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)" n)
+				file_name=$(json_param "$at_dec_json" n)
 				
 				mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
 				
@@ -201,7 +201,7 @@ else
 		
 		if [ -f "${file_name}.temp" ]
 			then
-				echo -e "\nResuming download ...\n"
+				echo -e "(Resuming previous download ...)\n"
 			
 				temp_size=$(stat -c %s "${file_name}.temp")
 			
