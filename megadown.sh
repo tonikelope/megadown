@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.4"
+VERSION="1.5"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -76,7 +76,7 @@ else
 		
 		mega_req_json="[{\"a\":\"g\", \"p\":\"$file_id\"}]"
 		
-		mega_res_json=$(curl -s -X POST --data-binary "$mega_req_json" "$mega_req_url")
+		mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
 		
 		if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]
 		then
@@ -98,7 +98,7 @@ else
 				
 				mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
 				
-				mega_res_json=$(curl -s -X POST --data-binary "$mega_req_json" "$mega_req_url")
+				mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
 				
 				dl_temp_url=$(json_param "$mega_res_json" g)
 			else
@@ -110,7 +110,7 @@ else
 		
 		#MEGACRYPTER LINK
 		
-		info_link=$(curl -s -X POST --data-binary "{\"m\":\"info\", \"link\":\"$1\"}" "$MC_API_URL")
+		info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
 
 		if [ $(echo $info_link | grep '"error"') ]
 		then
@@ -167,7 +167,7 @@ else
 
 			hex_key=$(hrk2hk "$hex_raw_key")
 
-			dl_link=$(curl -s -X POST --data-binary "{\"m\":\"dl\", \"link\":\"$1\"}" "$MC_API_URL")
+			dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$1\"}" -O - "$MC_API_URL")
 
 			if [ $(echo $dl_link | grep '"error"') ]
 			then
@@ -185,9 +185,9 @@ else
 		
 		if [ -z $2 ]
 		then
-			CURL_DL_COMMAND="curl -s"
+			DL_COMMAND="wget -q -O -"
 		else
-			CURL_DL_COMMAND="curl -s --limit-rate $2"
+			DL_COMMAND="wget -q --limit-rate $2 -O -"
 		fi
 		
 		if [ $file_size -ge 1024 ]
@@ -213,10 +213,10 @@ else
 			
 				truncate -s $offset "${file_name}.temp"
 
-				$CURL_DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
+				$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
 			else
 				hex_iv="${hex_raw_key:32:16}0000000000000000"				
-				$CURL_DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
+				$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
 			fi
 
 			mv "${file_name}.temp" "${file_name}"
@@ -224,6 +224,6 @@ else
 			echo -e "\nFILE DOWNLOADED :)!\n"
 		else
 			hex_iv="${hex_raw_key:32:16}0000000000000000"
-			$CURL_DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv
+			$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv
 		fi
 fi
