@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.5"
+VERSION="1.5.1"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -185,9 +185,9 @@ else
 		
 		if [ -z $2 ]
 		then
-			DL_COMMAND="wget -q -O -"
+			DL_COMMAND="wget -q -O - "
 		else
-			DL_COMMAND="wget -q --limit-rate $2 -O -"
+			DL_COMMAND="wget -q --limit-rate $2 -O - "
 		fi
 		
 		if [ $file_size -ge 1024 ]
