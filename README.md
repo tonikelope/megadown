@@ -6,6 +6,7 @@ Bash script for download files from mega.co.nz and megacrypter.com
 Features:
 
 *Resume previous downloads
+
 *MegaCrypter password protected links supported
 
 Dependencies:
