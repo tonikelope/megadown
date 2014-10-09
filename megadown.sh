@@ -1,10 +1,10 @@
 #!/bin/bash
 
-VERSION="1.5.3"
+VERSION="1.5.4"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
-MC_API_URL="http://megacrypter.com/api"
+MC_API_URL="https://megacrypter.com/api"
 OPENSSL_AES_CTR_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_DEC="openssl enc -a -A -d -aes-128-cbc"
 
