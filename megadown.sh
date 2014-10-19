@@ -1,12 +1,13 @@
 #!/bin/bash
 
-VERSION="1.5.4"
+VERSION="1.5.9"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
 MC_API_URL="https://megacrypter.com/api"
-OPENSSL_AES_CTR_DEC="openssl enc -d -aes-128-ctr"
-OPENSSL_AES_CBC_DEC="openssl enc -a -A -d -aes-128-cbc"
+OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
+OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
+OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 
 # 1:json_string 2:index
 function json_param {
@@ -29,15 +30,15 @@ function b64_pad {
 }
 
 # 1:string
-function md5 {
+function sha256 {
 
-	echo -n "$1" | md5sum | tr -d -c [:alnum:]
+	echo -n "$1" | sha256sum | tr -d -c [:alnum:]
 }
 
-# 1:pass 2:double_md5 3:salt
+# 1:pass 2:double_sha256 3:salt
 function is_valid_pass {
 
-	if [ $(md5 "$3$(md5 "$1")$3") != $2 ]
+	if [ $(sha256 "$(sha256 "$3$1$3")") != $2 ]
 	then
 		echo -n "0"
 	else
@@ -90,7 +91,7 @@ else
 
 			hex_key=$(hrk2hk "$hex_raw_key")
 			
-			at_dec_json=$(echo -n $(b64_pad "$at") | $OPENSSL_AES_CBC_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
+			at_dec_json=$(echo -n $(b64_pad "$at") | $OPENSSL_AES_CBC_128_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
 			
 			if [ $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]
 			then
@@ -130,7 +131,7 @@ else
 			if [ $pass != "false" ]
 			then
 				arr_pass=(${pass//#/ })
-				pass_double_md5=${arr_pass[0]}
+				pass_double_sha256=${arr_pass[0]}
 				pass_salt=${arr_pass[1]}
 				pass=""
 
@@ -138,7 +139,7 @@ else
 				then
 					pass="$4"
 								
-					if [ $(is_valid_pass $pass $pass_double_md5 $pass_salt) -eq 0 ]
+					if [ $(is_valid_pass $pass $pass_double_sha256 $pass_salt) -eq 0 ]
 					then
 						pass=""
 					fi
@@ -148,16 +149,17 @@ else
 				then		
 					read -e -p "Link is password protected. Enter password: " pass
 							
-					until [ $(is_valid_pass $pass $pass_double_md5 $pass_salt) -eq 1 ]; do
+					until [ $(is_valid_pass $pass $pass_double_sha256 $pass_salt) -eq 1 ]; do
 						read -e -p "Wrong password! Try again: " pass
 					done		
 				fi
 
-				hex_raw_key=$(echo -n $(b64_pad $(json_param "$info_link" key)) | $OPENSSL_AES_CBC_DEC -K $(md5 "$pass") -iv "00000000000000000000000000000000" | od -An -t x1 | tr -d '\n ')
+
+				hex_raw_key=$(echo -n $(b64_pad $(json_param "$info_link" key)) | $OPENSSL_AES_CBC_256_DEC -K $(sha256 "$pass_salt$pass$pass_salt") -iv "00000000000000000000000000000000" | od -An -t x1 | tr -d '\n ')
 				
 				if [ -z $3 ]
 				then
-					file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_DEC -K $(md5 "$pass") -iv "00000000000000000000000000000000")
+					file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $(sha256 "$pass_salt$pass$pass_salt") -iv "00000000000000000000000000000000")
 				fi
 			else
 				hex_raw_key=$(echo -n $(b64_pad $(json_param "$info_link" key)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')	
@@ -213,10 +215,10 @@ else
 			
 				truncate -s $offset "${file_name}.temp"
 
-				$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
+				$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
 			else
 				hex_iv="${hex_raw_key:32:16}0000000000000000"				
-				$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
+				$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
 			fi
 
 			mv "${file_name}.temp" "${file_name}"
@@ -224,6 +226,6 @@ else
 			echo -e "\nFILE DOWNLOADED :)!\n"
 		else
 			hex_iv="${hex_raw_key:32:16}0000000000000000"
-			$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_DEC -K $hex_key -iv $hex_iv
+			$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
 		fi
 fi
