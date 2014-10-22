@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.5.9"
+VERSION="1.6.0"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -130,37 +130,8 @@ else
 			
 			if [ $pass != "false" ]
 			then
-				arr_pass=(${pass//#/ })
-				pass_double_sha256=${arr_pass[0]}
-				pass_salt=${arr_pass[1]}
-				pass=""
-
-				if [ $4 ]
-				then
-					pass="$4"
-								
-					if [ $(is_valid_pass $pass $pass_double_sha256 $pass_salt) -eq 0 ]
-					then
-						pass=""
-					fi
-				fi
-				
-				if [ -z $pass ]
-				then		
-					read -e -p "Link is password protected. Enter password: " pass
-							
-					until [ $(is_valid_pass $pass $pass_double_sha256 $pass_salt) -eq 1 ]; do
-						read -e -p "Wrong password! Try again: " pass
-					done		
-				fi
-
-
-				hex_raw_key=$(echo -n $(b64_pad $(json_param "$info_link" key)) | $OPENSSL_AES_CBC_256_DEC -K $(sha256 "$pass_salt$pass$pass_salt") -iv "00000000000000000000000000000000" | od -An -t x1 | tr -d '\n ')
-				
-				if [ -z $3 ]
-				then
-					file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $(sha256 "$pass_salt$pass$pass_salt") -iv "00000000000000000000000000000000")
-				fi
+				echo -e "\nPassword protected links are not supported :(!\n" 1>&2
+				exit
 			else
 				hex_raw_key=$(echo -n $(b64_pad $(json_param "$info_link" key)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')	
 			fi
