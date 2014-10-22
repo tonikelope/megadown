@@ -7,8 +7,6 @@ Features:
 
 *Resume previous downloads
 
-*MegaCrypter password protected links supported
-
 Dependencies:
 
 * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
