@@ -6,11 +6,13 @@ Bash script for download files from mega.co.nz and megacrypter.com
 Features:
 
 *Resume previous downloads
+*MC password protected links supported
 
 Dependencies:
 
 * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
 * perl
+* PHP (for MegaCrypter password protected links)
 * pv
 
 Example (remember chmod u+x):
