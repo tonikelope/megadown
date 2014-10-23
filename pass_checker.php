@@ -11,12 +11,12 @@
 	
 	function passHMAC($algo, $pass, $salt, $iterations, $raw_output=true) {
 		
-        for($i=0, $u=hash_hmac($algo, $salt, $pass, $raw_output); $i<$iterations-1; $i++) {
+        for($i=1, $xor=($last=hash_hmac($algo, $salt, $pass, true)); $i<$iterations; $i++) {
 
-            $u^=hash_hmac($algo, $u, $pass, $raw_output);
+            $xor^=($last=hash_hmac($algo, $last, $pass, true));
         }
 
-        return $u;
+        return $raw_output?$xor:bin2hex($xor);
     }
     
     echo check_password($argv[1], $argv[2]);

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-VERSION="1.6.3"
-
+VERSION="1.6.4"
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
 MC_API_URL="https://megacrypter.com/api"
@@ -113,7 +112,7 @@ else
 			
 			mc_pass=$(json_param "$info_link" pass)
 			
-			if [ $mc_pass -ne 0 ]
+			if [ "$mc_pass" != "0" ]
 			then
 				
 				pass=""
@@ -122,7 +121,7 @@ else
 				then
 					pass="$4"
 								
-					if [ $(php ./pass_checker.php $pass $mc_pass) == "bad-password" ]
+					if [ $(php $(dirname "$0")/pass_checker.php "$pass" "$mc_pass") == "bad-password" ]
 					then
 						pass=""
 					fi
@@ -132,11 +131,11 @@ else
 				then		
 					read -e -p "Link is password protected. Enter password: " pass
 					
-					pass_hash=$(php ./pass_checker.php $pass $mc_pass)
+					pass_hash=$(php $(dirname "$0")/pass_checker.php "$pass" "$mc_pass")
 							
 					until [ "$pass_hash" != "bad-password" ]; do
 						read -e -p "Wrong password! Try again: " pass
-						pass_hash=$(php ./pass_checker.php $pass $mc_pass)
+						pass_hash=$(php $(dirname "$0")/pass_checker.php "$pass" "$mc_pass")
 					done		
 				fi
 
