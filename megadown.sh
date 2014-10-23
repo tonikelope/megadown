@@ -69,8 +69,6 @@ else
 			echo -e "\nMEGA ERROR: $error_code\n" 1>&2
 			exit
 		else	
-
-			
 			file_size=$(json_param "$mega_res_json" s)
 			
 			at=$(json_param "$mega_res_json" at)
