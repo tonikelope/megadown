@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.6.1"
+VERSION="1.6.3"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
@@ -11,7 +11,7 @@ OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 
 # 1:json_string 2:index
 function json_param {
-	echo -ne "$1" | tr -d '\n' | perl -pe "s/^.*\"$2\" *?\: *?([0-9]+|true|false|null|\".*?(?<!\\\\)\").*?$/\1/s" | perl -pe "s/^\"(.+)\"$/\1/" | tr -d '\\'
+	php -r '$val=json_decode($argv[1]); if(is_array($val)){$val=$val[0];} if(is_bool($val->$argv[2])){echo $val->$argv[2]?"1":"0";}else{echo $val->$argv[2];}' "$1" "$2"
 }
 
 # 1:b64_encoded_String
@@ -27,23 +27,6 @@ function b64_pad {
 	done
 	
 	echo -n "$b64"
-}
-
-# 1:string
-function sha256 {
-
-	echo -n "$1" | sha256sum | tr -d -c [:alnum:]
-}
-
-# 1:pass 2:double_sha256 3:salt
-function is_valid_pass {
-
-	if [ $(sha256 "$(sha256 "$3$1$3")") != $2 ]
-	then
-		echo -n "0"
-	else
-		echo -n "1"
-	fi
 }
 
 # 1:hex_raw_key
@@ -66,11 +49,11 @@ else
 	then
 		
 		#MEGA.CO.NZ LINK
+
+		file_id=$(php -r "echo preg_replace('/^.*\/#!(.+)!.*$/', '\1', \$argv[1]);" "$1")
 		
-		file_id=$(echo -n $1 | perl -pe "s/^.*\/#!(.+)!.*$/\1/s")
-		
-		file_key=$(echo -n $1 | perl -pe "s/^.*\/#!.+!(.*)$/\1/s")
-		
+		file_key=$(php -r "echo preg_replace('/^.*\/#!.+!(.+)$/', '\1', \$argv[1]);" "$1")
+	
 		hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 		
 		mega_req_url="${MEGA_API_URL}/cs?id=$seqno&ak=$MEGA_API_KEY"
@@ -81,10 +64,13 @@ else
 		
 		if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]
 		then
-			error_code=$(echo -n "$mega_res_json" | perl -pe "s/^.*\[(.*?)\].*$/\1/s")
+			error_code=$(php -r "echo preg_replace('/^.*\[(.*?)\].*$', \$argv[1]);" "$mega_res_json")
+
 			echo -e "\nMEGA ERROR: $error_code\n" 1>&2
 			exit
 		else	
+
+			
 			file_size=$(json_param "$mega_res_json" s)
 			
 			at=$(json_param "$mega_res_json" at)
@@ -95,8 +81,9 @@ else
 			
 			if [ $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]
 			then
-				file_name=$(json_param "$at_dec_json" n)
 				
+				file_name=$(json_param "$(echo -n "$at_dec_json" | grep -E -o '\{.+\}')" n)
+
 				mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
 				
 				mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
@@ -128,7 +115,7 @@ else
 			
 			mc_pass=$(json_param "$info_link" pass)
 			
-			if [ $mc_pass != "false" ]
+			if [ $mc_pass -ne 0 ]
 			then
 				
 				pass=""

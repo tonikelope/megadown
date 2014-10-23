@@ -12,8 +12,7 @@ Features:
 Dependencies:
 
 * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
-* perl
-* PHP (for MegaCrypter password protected links)
+* PHP-cli
 * pv
 
 Example (remember chmod u+x):
