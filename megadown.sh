@@ -208,6 +208,10 @@ else
 			mv "${file_name}.temp" "${file_name}"
 		
 			echo -e "\nFILE DOWNLOADED :)!\n"
+			
+			echo -e "\nChecking FILE INTEGRITY. Please wait...\n"
+			
+			php $(dirname "$0")/cbc_mac_checker.php $(json_param "$info_link" key) "$file_name" $file_size
 		else
 			hex_iv="${hex_raw_key:32:16}0000000000000000"
 			$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
