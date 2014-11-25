@@ -1,9 +1,8 @@
 #!/bin/bash
 
-VERSION="1.6.4"
+VERSION="1.6.5"
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
-MC_API_URL="https://megacrypter.com/api"
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
@@ -94,6 +93,8 @@ else
 	else
 		
 		#MEGACRYPTER LINK
+		
+		MC_API_URL=$(echo -n $1 | grep -i -E -o 'https?://[^/]+')"/api"
 		
 		info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
 
