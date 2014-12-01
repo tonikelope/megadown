@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.6.5"
+VERSION="1.6.6"
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
@@ -175,8 +175,8 @@ else
 		fi
 
 	if [ "$3" != "-" ]
-		then
-		
+	then
+	
 		if [ $file_size -ge 1024 ]
 		then
 			file_size_f="~"$(($file_size/(1024*1024)))" MB"
@@ -185,19 +185,23 @@ else
 		fi
 
 		echo -e "\nDownloading ${file_name} [${file_size_f}] ...\n"
-		
-		if [ -f "${file_name}.temp" ]
+
+		dl_exit_code=1
+
+		until [ $dl_exit_code -eq 0 ]; do
+
+			if [ -f "${file_name}.temp" ]
 			then
 				echo -e "(Resuming previous download ...)\n"
-			
+
 				temp_size=$(stat -c %s "${file_name}.temp")
-			
+
 				offset=$(($temp_size-$(($temp_size%16))))
 
 				iv_forward=$(printf "%016x" $(($offset/16)))
 
 				hex_iv="${hex_raw_key:32:16}$iv_forward"
-			
+
 				truncate -s $offset "${file_name}.temp"
 
 				$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
@@ -206,11 +210,21 @@ else
 				$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
 			fi
 
-			mv "${file_name}.temp" "${file_name}"
+			dl_exit_code=$?
+
+			if [ $dl_exit_code -ne 0 ]
+			then
+				echo -e "\nOooops, download failed! EXIT CODE -> ${dl_exit_code}\n"
+			fi	
 		
-			echo -e "\nFILE DOWNLOADED :)!\n"
-		else
-			hex_iv="${hex_raw_key:32:16}0000000000000000"
-			$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
-		fi
+		done
+
+		mv "${file_name}.temp" "${file_name}"
+
+		echo -e "\nFILE DOWNLOADED :)!\n"
+			
+	else
+		hex_iv="${hex_raw_key:32:16}0000000000000000"
+		$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
+	fi
 fi
