@@ -1,7 +1,7 @@
 megadown
 ========
 
-Bash script for download files from mega.co.nz and megacrypter.com
+Bash script for download files from mega.co.nz and megacrypter
 
 Features:
 
@@ -20,7 +20,7 @@ Example (remember chmod u+x):
 ```
 $ /path/to/megadown.sh 'https://mega.co.nz/#!xxxxxxxxxx!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
-$ /path/to/megadown.sh 'http://megacrypter.com/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
+$ /path/to/megadown.sh 'http://megacrypter_domian/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
 ```
 
 If you have a link list you can download it with:
