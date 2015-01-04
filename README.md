@@ -20,7 +20,7 @@ Example (remember chmod u+x):
 ```
 $ /path/to/megadown.sh 'https://mega.co.nz/#!xxxxxxxxxx!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
-$ /path/to/megadown.sh 'http://megacrypter_domian/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
+$ /path/to/megadown.sh 'http://megacrypter_domain/!xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx!xxxxxxxx'
 ```
 
 If you have a link list you can download it with:
