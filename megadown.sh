@@ -39,7 +39,7 @@ echo -e "\nThis is MEGA-DOWN $VERSION - https://github.com/tonikelope/megadown\n
 
 if [ -z $1 ]
 then
-	echo -e "\n$0 <mega_url|mc_url> [speed_limit_bytes_second] [output_file] [mc_url_pass]\n\nNote: use '-' for output to STDOUT\n"
+	echo -e "$0 <mega_url|mc_url> [speed_limit_bytes_second] [output_file] [mc_url_pass]\n\nNote: use '-' for output to STDOUT\n"
 	exit
 fi
 
@@ -192,7 +192,20 @@ then
 		file_size_f="${file_size} bytes"
 	fi
 
-	echo -e "\nDownloading ${file_name} [${file_size_f}] ...\n"
+	if [ -f "${file_name}" ]
+	then
+		actual_size=$(wc -c "${file_name}" | cut -f 1 -d ' ')
+
+		if [ "${actual_size}" != "${file_size}" ]
+		then
+			echo -e "\nFile ${file_name} exists but with different size. Downloading [${file_size_f}] ...\n"
+		else
+			echo -e "\nFile ${file_name} exists. Download aborted.\n"
+			exit
+		fi
+	else
+		echo -e "\nDownloading ${file_name} [${file_size_f}] ...\n"
+	fi
 
 	dl_exit_code=1
 
@@ -227,9 +240,14 @@ then
 	
 	done
 
-	mv "${file_name}.temp" "${file_name}"
+	if [ -f "${file_name}.temp" ]
+	then
+		mv "${file_name}.temp" "${file_name}"
+		echo -e "\nFILE DOWNLOADED :)!\n"
+	else
+		echo -e "\nFILE COULD NOT BE DOWNLOADED :(!\n"
+	fi
 
-	echo -e "\nFILE DOWNLOADED :)!\n"
 		
 else
 	hex_iv="${hex_raw_key:32:16}0000000000000000"
