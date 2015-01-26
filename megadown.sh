@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.6.6"
+VERSION="1.6.7"
 MEGA_API_URL="https://g.api.mega.co.nz"
 MEGA_API_KEY=""
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
