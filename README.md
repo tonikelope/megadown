@@ -12,7 +12,7 @@ Features:
 Dependencies:
 
 * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
-* PHP-cli
+* PHP-cli (for MC password protected links)
 * pv
 
 Example (remember chmod u+x):
