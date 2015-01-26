@@ -36,7 +36,7 @@ function hrk2hk {
 	printf "%016x" ${key[*]}
 } 
 
-echo -e "\nThis is MEGA-DOWN $VERSION"
+echo -e "\nThis is MEGA-DOWN $VERSION - https://github.com/tonikelope/megadown"
 
 if [ -z $1 ]
 then
