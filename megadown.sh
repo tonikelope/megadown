@@ -35,13 +35,21 @@ function hrk2hk {
 	printf "%016x" ${key[*]}
 } 
 
-echo -e "\nThis is MEGA-DOWN $VERSION - https://github.com/tonikelope/megadown"
+echo -e "\nThis is MEGA-DOWN $VERSION - https://github.com/tonikelope/megadown\n"
 
 if [ -z $1 ]
 then
 	echo -e "\n$0 <mega_url|mc_url> [speed_limit_bytes_second] [output_file] [mc_url_pass]\n\nNote: use '-' for output to STDOUT\n"
 	exit
 fi
+
+for i in pv openssl wget php; do
+	if [ "`which $i`" == "" ]
+	then
+		echo -e "\nCommand $i is required and not installed\n"
+		exit
+	fi
+done
 
 if [ $(echo -n $1 | grep -E -o 'mega\.co\.nz') ]
 then
