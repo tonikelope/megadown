@@ -10,9 +10,9 @@ Bash script for download files from mega.co.nz and megacrypter
 
 ## Dependencies:
 
- * OpenSSL (with support for AES 128 CTR and AES 128 CBC)"
- * php-cli (for MC password protected links)"
- * pv (monitor the progress of data)"
+ * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
+ * php-cli (for MC password protected links)
+ * pv (monitor the progress of data)
 
 ## Usage
 
