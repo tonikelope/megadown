@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.6.9"
+VERSION="1.7.0"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -183,11 +183,17 @@ else
 				pass_hash=$($PHP_HELPERS passwordCheck "$pass" "$mc_pass")
 			done
 		fi
+		
+		IFS='#' read -a array <<< "$pass_hash"
+		
+		pass_hash=${array[0]}
+		
+		iv=${array[1]}
 
-		hex_raw_key=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$info_link" key)) | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "00000000000000000000000000000000" | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$info_link" key)) | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
 
 		if [ -z "$output" ]; then
-			file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "00000000000000000000000000000000")
+			file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
 		fi
 	else
 		hex_raw_key=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$info_link" key)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
@@ -204,6 +210,13 @@ else
 	fi
 
 	dl_temp_url=$($PHP_HELPERS jsonParam "$dl_link" url)
+	
+	if [ "$mc_pass" != "0" ]; then
+
+		iv=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$dl_link" pass)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		
+		dl_temp_url=$(echo -n $(b64_pad "$dl_temp_url") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
+	fi
 fi
 
 if [ -z "$speed" ]; then
