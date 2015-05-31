@@ -35,8 +35,4 @@ function passwordHMAC($algo, $pass, $salt, $iterations)
 	return $xor;
 }
 
-if (!function_exists($argv[1])) {
-	die(sprintf("Function %s not exists", $argv[1]));
-}
-
-echo $argv[1]($argv[2], $argv[3]);
+echo call_user_func_array($argv[1], array_slice($argv, 2));

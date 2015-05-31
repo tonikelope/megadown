@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.0"
+VERSION="1.7.1"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
