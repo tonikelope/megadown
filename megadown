@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.1"
+VERSION="1.7.2"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -114,7 +114,7 @@ for i in pv openssl wget php; do
 	fi
 done
 
-if [ $(echo -n $link | grep -E -o 'mega(\.co)?\.nz') ]; then
+if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	#MEGA.CO.NZ LINK
 
 	file_id=$(php -r "echo preg_replace('/^.*\/#!(.+)!.*$/', '\1', \$argv[1]);" "$link")
@@ -150,7 +150,7 @@ if [ $(echo -n $link | grep -E -o 'mega(\.co)?\.nz') ]; then
 else
 	#MEGACRYPTER LINK
 
-	MC_API_URL=$(echo -n $link | grep -i -E -o 'https?://[^/]+')"/api"
+	MC_API_URL=$(echo -n "$link" | grep -i -E -o 'https?://[^/]+')"/api"
 	info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$link\"}" -O - "$MC_API_URL")
 
 	if [ $(echo $info_link | grep '"error"') ]; then
