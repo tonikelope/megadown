@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.2"
+VERSION="1.7.3"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -162,6 +162,18 @@ else
 		file_name=$($PHP_HELPERS jsonParam "$info_link" name)
 	else
 		file_name="$output"
+	fi
+	
+	path=$($PHP_HELPERS jsonParam "$info_link" path)
+
+	if [ "$path" != "0" ] && [ -n "$path" ]; then
+	
+		if [ ! -d "$path" ]; then
+		
+			mkdir -p "$path"
+		fi
+		
+		file_name="${path}${file_name}"
 	fi
 
 	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)

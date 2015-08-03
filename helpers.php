@@ -2,9 +2,10 @@
 function jsonParam($json, $var)
 {
 	$val = json_decode($json);
+	
 	$val = is_array($val) ? $val[0] : $val;
 
-	if (is_bool($val->$var)) {
+	if (isset($val->$var) && is_bool($val->$var)) {
 		return $val->$var ? '1' : '0';
 	} elseif (isset($val->$var)) {
 		return $val->$var;
