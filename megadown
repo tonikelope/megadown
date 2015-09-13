@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.3"
+VERSION="1.7.4"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -125,7 +125,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]; then
-		error_code=$(php -r "echo preg_replace('/^.*\[(.*?)\].*$', \$argv[1]);" "$mega_res_json")
+		error_code=$(php -r "echo preg_replace('/^.*\[(.*?)\].*$/', '\$1',\$argv[1]);" "$mega_res_json")
 		showError "ERROR: MEGA $error_code"
 	fi
 
