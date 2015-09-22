@@ -18,7 +18,7 @@ function passwordCheck($password, $mc_pass)
 {
 	list($iter_log2, $key_check, $salt, $iv) = explode('#', $mc_pass);
 
-	$hmac = passwordHMAC('sha256', $password, base64_decode($salt), pow(2, $iter_log2));
+	$hmac = passwordHMAC('sha256', base64_decode($salt), $password, pow(2, $iter_log2));
 
 	if (hash_hmac('sha256', $hmac, base64_decode($iv), true) !== base64_decode($key_check)) {
 		return 'bad-password';
@@ -27,8 +27,9 @@ function passwordCheck($password, $mc_pass)
 	return bin2hex($hmac).'#'.bin2hex(base64_decode($iv));
 }
 
-function passwordHMAC($algo, $pass, $salt, $iterations)
+function passwordHMAC($algo, $salt, $pass, $iterations)
 {
+	# php_hmac (algorithm, data, key, bin_output)
 	for ($i = 1, $xor = ($last = hash_hmac($algo, $salt, $pass, true)); $i < $iterations; $i++) {
 		$xor ^= ($last = hash_hmac($algo, $last, $pass, true));
 	}
