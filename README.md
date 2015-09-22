@@ -7,11 +7,12 @@ Bash script for download files from mega.co.nz and megacrypter
  * Resume previous downloads
  * MC password protected links supported
  * Download files from list
+ * Speed limit
 
 ## Dependencies:
 
  * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
- * php-cli (for MC password protected links)
+ * php-cli (for JSON decoding and Megacrypter password protected links)
  * pv (monitor the progress of data)
 
 ## Usage
