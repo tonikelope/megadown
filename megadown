@@ -1,12 +1,12 @@
 #!/bin/bash
 
-VERSION="1.7.5"
+VERSION="1.7.6"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
 PHP_HELPERS="php $HERE/helpers.php"
 
-MEGA_API_URL="https://g.api.mega.nz"
+MEGA_API_URL="https://g.api.mega.co.nz"
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
@@ -130,7 +130,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	wget_exit_code=$?
 	
 	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE ({wget_exit_code})"
+		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]; then
@@ -160,7 +160,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
 	
 	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE ({wget_exit_code})"
+		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
 	fi	
 	
 	dl_temp_url=$($PHP_HELPERS jsonParam "$mega_res_json" g)
