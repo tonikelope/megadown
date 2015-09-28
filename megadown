@@ -36,7 +36,7 @@ function showHelp {
 
 	echo -e "\nDependencies:"
 	echo -e "\t- OpenSSL  (with support for AES 128 CTR and AES 128 CBC)"
-	echo -e "\t- php-cli  (for JSON decode and MC password protected links)"
+	echo -e "\t- php-cli  (for JSON decoding and MC password protected links)"
 	echo -e "\t- pv       (monitor the progress of data)"
 
 	echo ''
