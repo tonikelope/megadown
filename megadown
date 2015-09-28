@@ -89,13 +89,14 @@ function netoken {
 
 	expire=$($PHP_HELPERS jsonParam "$info_link" expire)
 
-	if [ -n "$expire" ]; then
+	if [ "$expire" != "0" ]; then
 	
 		IFS='#' read -a array <<< "$expire"
+	
+		echo -n ${array[1]}
 		
-		echo ${array[1]}
 	else
-		echo "0"
+		echo -n "$expire"
 	fi
 }
 
