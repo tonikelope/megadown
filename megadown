@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.6"
+VERSION="1.7.8"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -11,81 +11,36 @@ OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 
+for i in pv openssl wget php; do
+	if [ "`which $i`" == "" ]; then
+		showHelp
+		showError "ERROR: Command $i is required and not installed"
+	fi
+done
+
 function showHelp {
 	echo -e "\nmegadown v$VERSION - https://github.com/tonikelope/megadown"
 	echo -e "\nmega.co.nz and megacrypter download bash script"
 
 	echo -e "\nUsage"
-	echo -e "\t./megadown '[link]' [-k|--key mega_api_key] [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
+	echo -e "\t./megadown '[link]' [-k|--key mega_api_key] [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass] [-n|--no-expire-token token]"
 	echo -e "\t./megadown [-l|--list file_list] [-k|--key mega_api_key] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
 
 	echo -e "\nParameters"
-	echo -e "\t-l | --list      get links from text file. To set new names to list files, add the new name after a space for each line."
-	echo -e "\t-o | --output    store file with this name"
-	echo -e "\t-s | --speed     download speed limit (500b, 500k, 2m)"
-	echo -e "\t-p | --password  password to protected files"
-	echo -e "\t-k | --key       your mega API key"
+	echo -e "\t-l | --list                  get links from text file. To set new names to list files, add the new name after a space for each line."
+	echo -e "\t-o | --output                store file with this name"
+	echo -e "\t-s | --speed                 download speed limit (500b, 500k, 2m)"
+	echo -e "\t-p | --password              password to protected files"
+	echo -e "\t-k | --key                   your mega API key"
+	echo -e "\t-n | --no-expire-token       no-expire-token for MC links"
 
 	echo -e "\nDependencies:"
 	echo -e "\t- OpenSSL  (with support for AES 128 CTR and AES 128 CBC)"
-	echo -e "\t- php-cli  (for MC password protected links)"
+	echo -e "\t- php-cli  (for JSON decode and MC password protected links)"
 	echo -e "\t- pv       (monitor the progress of data)"
 
 	echo ''
 }
-
-function showError {
-	echo -e "\n$1\n" 1>&2
-	exit 1
-}
-
-if [ -z "$1" ]; then
-	showHelp
-	exit 1
-fi
-
-if [[ "$1" =~ ^http ]]; then
-	link="$1"
-fi
-
-eval set -- "$(getopt -o "l:p:k:o:s:" -l "list:,password:,key:,output:,speed:" -- "$@")"
-
-while true; do
-	case "$1" in
-		-l|--list)     list="$2";     shift 2;;
-		-p|--password) password="$2"; shift 2;;
-		-k|--key)      key="$2";      shift 2;;
-		-o|--output)   output="$2";   shift 2;;
-		-s|--speed)    speed="$2";    shift 2;;
-
-		--) shift; break;;
-
-		*)
-			showHelp
-			exit 1;;
-	esac
-done
-
-if [ -z "$link" ]; then
-	if [ -z "$list" ]; then
-		showHelp
-		showError "ERROR: MEGA link or --list parameter is required"
-	elif [ ! -f "$list" ]; then
-		showHelp
-		showError "ERROR: MEGA list file ${list} not found"
-	fi
-
-	cat "$list" | while read line; do
-		if [[ "$line" =~ ^http ]]; then
-			link=$(echo ${line} | awk -F' ' '{print $1}' | xargs)
-			output=$(echo ${line} | awk -F' ' '{$1="";print}' | xargs)
-
-			$SCRIPT "$link" --output="$output" --password="$password" --key="$key" --speed="$speed"
-		fi
-	done
-
-	exit 0
-fi
 
 # 1:b64_encoded_String
 function b64_pad {
@@ -107,12 +62,127 @@ function hrk2hk {
 	printf "%016x" ${hk[*]}
 } 
 
-for i in pv openssl wget php; do
-	if [ "`which $i`" == "" ]; then
-		showHelp
-		showError "ERROR: Command $i is required and not installed"
+function showError {
+	echo -e "\n$1\n" 1>&2
+	exit 1
+}
+
+# 1:mc_link 2:link_count
+function netoken {
+	
+	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
+	
+	wget_exit_code=1
+	
+	info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
+	
+	wget_exit_code=$?
+	
+	if [ "$wget_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	fi	
+
+	if [ $(echo $info_link | grep '"error"') ]; then
+		error_code=$($PHP_HELPERS jsonParam "$info_link" error)
+		showError "ERROR: MEGACRYPTER $error_code"
 	fi
+
+	expire=$($PHP_HELPERS jsonParam "$info_link" expire)
+
+	if [ -n "$expire" ]; then
+	
+		IFS='#' read -a array <<< "$expire"
+		
+		echo ${array[1]}
+	else
+		echo "0"
+	fi
+}
+
+if [ -z "$1" ]; then
+	showHelp
+	exit 1
+fi
+
+if [[ "$1" =~ ^http ]]; then
+	link="$1"
+fi
+
+eval set -- "$(getopt -o "l:p:k:o:s:t:" -l "list:,password:,key:,output:,speed:,no-exp-token:" -- "$@")"
+
+while true; do
+	case "$1" in
+		-l|--list)     list="$2";     shift 2;;
+		-p|--password) password="$2"; shift 2;;
+		-k|--key)      key="$2";      shift 2;;
+		-o|--output)   output="$2";   shift 2;;
+		-s|--speed)    speed="$2";    shift 2;;
+		-n|--no-exp-token)    no_exp_token="$2";    shift 2;;
+
+		--) shift; break;;
+
+		*)
+			showHelp
+			exit 1;;
+	esac
 done
+
+if [ -z "$link" ]; then
+	if [ -z "$list" ]; then
+		showHelp
+		showError "ERROR: MEGA link or --list parameter is required"
+	elif [ ! -f "$list" ]; then
+		showHelp
+		showError "ERROR: MEGA list file ${list} not found"
+	fi
+	
+	link_count=0
+	
+	links=$(cat "$list")
+	
+	for link in $links; do
+        
+        l=$(echo ${link} | awk -F' ' '{print $1}')
+        
+        if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
+        
+			NO_EXP_TOKENS[$link_count]="0"
+			
+        else
+        
+			NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
+			
+        fi
+			
+		link_count=$((link_count + 1))
+		
+	done
+
+	link_count=0
+
+	cat "$list" | while read line; do
+		if [[ "$line" =~ ^http ]]; then
+			
+			link=$(echo ${line} | awk -F' ' '{print $1}')
+			
+			output=$(echo ${line} | awk -F' ' '{$1="";print}')
+			
+			if [ "${NO_EXP_TOKENS[$link_count]}" != "0" ]; then
+			
+				$SCRIPT "$link" --output="$output" --password="$password" --key="$key" --speed="$speed" --no-exp-token="${NO_EXP_TOKENS[$link_count]}"
+
+			else
+			
+				$SCRIPT "$link" --output="$output" --password="$password" --key="$key" --speed="$speed"
+			fi
+			
+			link_count=$((link_count + 1))
+		fi
+	done
+
+	exit 0
+fi
+
 
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	#MEGA.CO.NZ LINK
@@ -205,8 +275,8 @@ else
 	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
 
 	if [ "$mc_pass" != "0" ]; then
-		if [ -z $pass ]; then
-			if [ $($PHP_HELPERS passwordCheck "$pass" "$mc_pass") == "bad-password" ]; then
+		if [ -z "$password" ]; then
+			if [ $($PHP_HELPERS passwordCheck "$password" "$mc_pass") == "bad-password" ]; then
 				pass=""
 			fi
 		fi
@@ -242,7 +312,7 @@ else
 	
 	wget_exit_code=$?
 	
-	dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$link\"}" -O - "$MC_API_URL")
+	dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" -O - "$MC_API_URL")
 	
 	if [ "$wget_exit_code" -ne 0 ]; then
 		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
