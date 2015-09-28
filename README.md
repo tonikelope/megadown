@@ -24,8 +24,9 @@ Bash script for download files from mega.nz and megacrypter clones
 
 ## Parameters
 
- * `-l | --list`      get links from text file. To set new names to listed files, add the new name after a space for each line like `https://mega-link/ new-name.zip`
- * `-o | --output`    store file with this name
- * `-s | --speed`     download speed limit (500b, 500k, 2m)
- * `-p | --password`  password to protected files
- * `-k | --key`       your mega API key
+ * `-l | --list`                  get links from text file. To set new names to listed files, add the new name after a space for each line like `https://mega-link/ new-name.zip`
+ * `-o | --output`                store file with this name
+ * `-s | --speed`                 download speed limit (500b, 500k, 2m)
+ * `-p | --password`              password to protected files
+ * `-k | --key`                   your mega API key
+ * `-n | --no-expire-token`       no expire token for MC link
