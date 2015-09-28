@@ -141,21 +141,25 @@ if [ -z "$link" ]; then
 	links=$(cat "$list")
 	
 	for link in $links; do
-        
-        l=$(echo ${link} | awk -F' ' '{print $1}')
-        
-        if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
-        
-			NO_EXP_TOKENS[$link_count]="0"
+	
+		if [[ "$link" =~ ^http ]]; then
 			
-        else
+			l=$(echo ${link} | awk -F' ' '{print $1}')
         
-			NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
+			if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
 			
-        fi
+				NO_EXP_TOKENS[$link_count]="0"
+				
+			else
 			
-		link_count=$((link_count + 1))
+				NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
+				
+			fi
+				
+			link_count=$((link_count + 1))
 		
+		fi
+
 	done
 
 	link_count=0
