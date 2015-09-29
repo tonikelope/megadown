@@ -62,7 +62,7 @@ function showError {
 	exit 1
 }
 
-# 1:mc_link 2:link_count
+# 1:mc_link
 function netoken {
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
@@ -160,7 +160,7 @@ if [ -z "$link" ]; then
 					
 				else
 				
-					NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
+					NO_EXP_TOKENS[$link_count]=$(netoken "$l")
 					
 				fi
 				
