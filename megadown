@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.8"
+VERSION="1.7.9"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -33,11 +33,6 @@ function showHelp {
 	echo -e "\t-p | --password              password to protected files"
 	echo -e "\t-k | --key                   your mega API key"
 	echo -e "\t-n | --no-expire-token       no-expire-token for MC links"
-
-	echo -e "\nDependencies:"
-	echo -e "\t- OpenSSL  (with support for AES 128 CTR and AES 128 CBC)"
-	echo -e "\t- php-cli  (for JSON decoding and MC password protected links)"
-	echo -e "\t- pv       (monitor the progress of data)"
 
 	echo ''
 }
@@ -137,53 +132,75 @@ if [ -z "$link" ]; then
 		showError "ERROR: MEGA list file ${list} not found"
 	fi
 	
+	echo -ne "\nReading no expire tokens..."
+	
 	link_count=0
 	
-	links=$(cat "$list")
+	if [ -f ".${list}_tokens" ]; then
 	
-	for link in $links; do
-	
-		if [[ "$link" =~ ^http ]]; then
+		while read line; do
+		
+			NO_EXP_TOKENS[$link_count]="$line"
 			
-			l=$(echo ${link} | awk -F' ' '{print $1}')
-        
-			if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
-			
-				NO_EXP_TOKENS[$link_count]="0"
-				
-			else
-			
-				NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
-				
-			fi
-				
 			link_count=$((link_count + 1))
 		
-		fi
+		done < ".${list}_tokens"
+	
+	else
+	
+		while read line; do
+		
+			l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 
-	done
-
+			if [ -n "$l" ]; then
+				
+				if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
+				
+					NO_EXP_TOKENS[$link_count]="0"
+					
+				else
+				
+					NO_EXP_TOKENS[$link_count]=$(netoken "$l" $link_count)
+					
+				fi
+				
+				echo -ne "${NO_EXP_TOKENS[$link_count]}\n" >> ".${list}_tokens"
+					
+				link_count=$((link_count + 1))
+			
+			fi
+		
+		done < "$list"
+	
+	fi
+	
+	echo -ne " OK(${link_count})\n"
+	
 	link_count=0
-
-	cat "$list" | while read line; do
-		if [[ "$line" =~ ^http ]]; then
+	
+	while read line; do
+	
+		l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 			
-			link=$(echo ${line} | awk -F' ' '{print $1}')
-			
-			output=$(echo ${line} | awk -F' ' '{$1="";print}')
+		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+	
+		if [ -n "$l" ]; then
 			
 			if [ "${NO_EXP_TOKENS[$link_count]}" != "0" ]; then
 			
-				$SCRIPT "$link" --output="$output" --password="$password" --key="$key" --speed="$speed" --no-exp-token="${NO_EXP_TOKENS[$link_count]}"
+				$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed" --no-exp-token="${NO_EXP_TOKENS[$link_count]}"
 
 			else
 			
-				$SCRIPT "$link" --output="$output" --password="$password" --key="$key" --speed="$speed"
+				$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed"
 			fi
 			
 			link_count=$((link_count + 1))
 		fi
-	done
+	
+	done < "$list"
+	
+	rm ".${list}_tokens"
 
 	exit 0
 fi
@@ -263,6 +280,18 @@ else
 		file_name=$($PHP_HELPERS jsonParam "$info_link" name)
 	else
 		file_name="$output"
+	fi
+	
+	if [ -z "$no_exp_token" ]; then
+		
+		expire=$($PHP_HELPERS jsonParam "$info_link" expire)
+
+		if [ "$expire" != "0" ]; then
+		
+			IFS='#' read -a array <<< "$expire"
+		
+			no_exp_token=${array[1]}
+		fi
 	fi
 	
 	path=$($PHP_HELPERS jsonParam "$info_link" path)
