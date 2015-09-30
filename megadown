@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.1"
+VERSION="1.8.2"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -118,7 +118,7 @@ if [[ "$1" =~ ^http ]]; then
 	link="$1"
 fi
 
-eval set -- "$(getopt -o "l:p:k:o:s:t:" -l "list:,password:,key:,output:,speed:,no-exp-token:" -- "$@")"
+eval set -- "$(getopt -o "l:p:k:o:s:" -l "list:,password:,key:,output:,speed:" -- "$@")"
 
 while true; do
 	case "$1" in
