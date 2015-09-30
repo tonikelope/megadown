@@ -20,7 +20,7 @@ done
 
 function showHelp {
 	echo -e "\nmegadown v$VERSION - https://github.com/tonikelope/megadown"
-	echo -e "\nscript for download files from mega.nz (single links) and any \"megacrypter-clone\""
+	echo -e "\ndownloader for mega.nz (/#!) and \"megacrypter-clones\""
 
 	echo -e "\nUsage"
 	echo -e "\t./megadown '[link]' [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
