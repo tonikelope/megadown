@@ -11,7 +11,7 @@ OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 
-for i in pv openssl wget php; do
+for i in pv openssl wget php md5sum; do
 	if [ "`which $i`" == "" ]; then
 		showHelp
 		showError "ERROR: Command $i is required and not installed"
