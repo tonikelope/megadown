@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.0"
+VERSION="1.8.1"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -23,15 +23,14 @@ function showHelp {
 	echo -e "\nmega.co.nz and megacrypter download bash script"
 
 	echo -e "\nUsage"
-	echo -e "\t./megadown '[link]' [-k|--key mega_api_key] [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass] [-n|--no-expire-token token]"
-	echo -e "\t./megadown [-l|--list file_list] [-k|--key mega_api_key] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
+	echo -e "\t./megadown '[link]' [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
+	echo -e "\t./megadown [-l|--list file_list] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]"
 
 	echo -e "\nParameters"
 	echo -e "\t-l | --list                  get links from text file. To set new names to list files, add the new name after a space for each line."
 	echo -e "\t-o | --output                store file with this name"
 	echo -e "\t-s | --speed                 download speed limit (500b, 500k, 2m)"
 	echo -e "\t-p | --password              password to protected files"
-	echo -e "\t-k | --key                   your mega API key"
 
 	echo ''
 }
@@ -125,7 +124,6 @@ while true; do
 	case "$1" in
 		-l|--list)     list="$2";     shift 2;;
 		-p|--password) password="$2"; shift 2;;
-		-k|--key)      key="$2";      shift 2;;
 		-o|--output)   output="$2";   shift 2;;
 		-s|--speed)    speed="$2";    shift 2;;
 
@@ -202,7 +200,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	file_id=$(php -r "echo preg_replace('/^.*\/#!(.+)!.*$/', '\1', \$argv[1]);" "$link")
 	file_key=$(php -r "echo preg_replace('/^.*\/#!.+!(.+)$/', '\1', \$argv[1]);" "$link")
 	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
-	mega_req_url="${MEGA_API_URL}/cs?id=$seqno&ak=${key}"
+	mega_req_url="${MEGA_API_URL}/cs?id=&ak="
 	mega_req_json="[{\"a\":\"g\", \"p\":\"$file_id\"}]"
 	
 	wget_exit_code=1
@@ -406,7 +404,9 @@ fi
 
 mv "${file_name}.temp" "${file_name}"
 
-rm ".${md5}"
+if [ -f ".${md5}" ];then
+	rm ".${md5}"
+fi
 
 echo -e "\nFILE DOWNLOADED as ${file_name} :)!\n"
 
