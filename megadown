@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.2"
+VERSION="1.8.4"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -114,7 +114,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-if [[ "$1" =~ ^http ]]; then
+if [[ "$1" =~ ^http ]] || [[ "$1" =~ ^mega:// ]]; then
 	link="$1"
 fi
 
@@ -194,14 +194,26 @@ if [ -z "$link" ]; then
 fi
 
 
-if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
+if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" | grep -E -o 'mega://') ]; then
 	#MEGA.CO.NZ LINK
+	
+	link=$($PHP_HELPERS decryptMegaDownloaderLinks "$link")
 
-	file_id=$(php -r "echo preg_replace('/^.*\/#!(.+)!.*$/', '\1', \$argv[1]);" "$link")
-	file_key=$(php -r "echo preg_replace('/^.*\/#!.+!(.+)$/', '\1', \$argv[1]);" "$link")
+	link=$(php -r "echo str_ireplace('/#!N?', '/#N!', \$argv[1]);" "$link")
+
+	file_id=$(php -r "echo preg_replace('/^.*\/#.*?!(.+)!.*$/', '\1', \$argv[1]);" "$link")
+	
+	file_key=$(php -r "echo preg_replace('/^.*\/#.*?!.+!(.+)$/', '\1', \$argv[1]);" "$link")
+	
 	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	
 	mega_req_url="${MEGA_API_URL}/cs?id=&ak="
-	mega_req_json="[{\"a\":\"g\", \"p\":\"$file_id\"}]"
+	
+	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
+		mega_req_json="[{\"a\":\"g\", \"p\":\"$file_id\"}]"
+	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
+		mega_req_json="[{\"a\":\"g\", \"n\":\"$file_id\"}]"
+	fi
 	
 	wget_exit_code=1
 	
@@ -233,7 +245,11 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		file_name="$output"
 	fi
 	
-	mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
+	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
+		mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
+	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
+		mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"n\":\"$file_id\"}]"
+	fi
 	
 	wget_exit_code=$?
 	
