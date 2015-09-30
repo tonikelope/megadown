@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.4"
+VERSION="1.8.5"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -37,7 +37,7 @@ function showHelp {
 
 # 1:b64_encoded_String
 function b64_pad {
-	b64=$(echo -ne "$1" | tr '\-_' '+/')
+	b64=$(echo -n "$1" | tr '\-_' '+/')
 	pad=$(((4-${#1}%4)%4))
 
 	for i in $(seq 1 $pad); do
@@ -93,12 +93,16 @@ function get_mc_link_info {
 	fi
 	
 	if [ -z "$2" ]; then
-		file_name=$(echo -ne $($PHP_HELPERS jsonParam "$info_link" name) | base64 -i 2>/dev/null)
+		file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -i 2>/dev/null)
 	else
-		file_name=$(echo -ne "$2" | base64 -i 2>/dev/null)
+		file_name=$(echo -n "$2" | base64 -i 2>/dev/null)
 	fi
 	
-	path=$(echo -ne $($PHP_HELPERS jsonParam "$info_link" path) | base64 -i 2>/dev/null)
+	path=$(echo -n $($PHP_HELPERS jsonParam "$info_link" path))
+	
+	if [ "$path" != "0" ]; then
+		path=$(echo -n "$path" | base64 -i 2>/dev/null)
+	fi
 	
 	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
 	
@@ -106,7 +110,7 @@ function get_mc_link_info {
 	
 	key=$($PHP_HELPERS jsonParam "$info_link" key)
 	
-	echo -ne "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
+	echo -n "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
 
 if [ -z "$1" ]; then
@@ -290,6 +294,8 @@ else
 
 	if [ "$path" != "0" ] && [ -n "$path" ]; then
 	
+		path=$(echo -n "$path" | base64 -i 2>/dev/null)
+		
 		if [ ! -d "$path" ]; then
 		
 			mkdir -p "$path"
