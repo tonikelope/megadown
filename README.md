@@ -1,9 +1,10 @@
 # megadown
 
-Bash script for download files from mega.nz (single links) and any "megacrypter-clone"
+Bash script for download files from mega.nz and megacrypter
 
 ## Features
 
+ * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported
  * Resume previous downloads
  * MC password protected links supported
  * Download files from list
