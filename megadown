@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.7.9"
+VERSION="1.8.0"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -32,7 +32,6 @@ function showHelp {
 	echo -e "\t-s | --speed                 download speed limit (500b, 500k, 2m)"
 	echo -e "\t-p | --password              password to protected files"
 	echo -e "\t-k | --key                   your mega API key"
-	echo -e "\t-n | --no-expire-token       no-expire-token for MC links"
 
 	echo ''
 }
@@ -62,8 +61,8 @@ function showError {
 	exit 1
 }
 
-# 1:mc_link
-function netoken {
+
+function get_mc_link_info {
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
@@ -88,11 +87,27 @@ function netoken {
 	
 		IFS='#' read -a array <<< "$expire"
 	
-		echo -n ${array[1]}
+		no_exp_token=${array[1]}
 		
 	else
-		echo -n "$expire"
+		no_exp_token="$expire"
 	fi
+	
+	if [ -z "$2" ]; then
+		file_name=$(echo -ne $($PHP_HELPERS jsonParam "$info_link" name) | base64 -i 2>/dev/null)
+	else
+		file_name=$(echo -ne "$2" | base64 -i 2>/dev/null)
+	fi
+	
+	path=$(echo -ne $($PHP_HELPERS jsonParam "$info_link" path) | base64 -i 2>/dev/null)
+	
+	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
+	
+	file_size=$($PHP_HELPERS jsonParam "$info_link" size)
+	
+	key=$($PHP_HELPERS jsonParam "$info_link" key)
+	
+	echo -ne "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
 
 if [ -z "$1" ]; then
@@ -113,7 +128,6 @@ while true; do
 		-k|--key)      key="$2";      shift 2;;
 		-o|--output)   output="$2";   shift 2;;
 		-s|--speed)    speed="$2";    shift 2;;
-		-n|--no-exp-token)    no_exp_token="$2";    shift 2;;
 
 		--) shift; break;;
 
@@ -132,51 +146,37 @@ if [ -z "$link" ]; then
 		showError "ERROR: MEGA list file ${list} not found"
 	fi
 	
-	echo -ne "\nReading no expire tokens..."
+	echo -ne "\nReading mc links info..."
 	
 	link_count=0
 	
-	if [ -f ".${list}_tokens" ]; then
+	while read line; do
 	
-		while read line; do
+		l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 		
-			NO_EXP_TOKENS[$link_count]="$line"
-			
-			link_count=$((link_count + 1))
-		
-		done < ".${list}_tokens"
-	
-	else
-	
-		while read line; do
-		
-			l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
 
-			if [ -n "$l" ]; then
+		if [ -n "$l" ];then
+			
+			if ! [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
+			
+				md5=$(echo -n "$l" | md5sum | grep -E -o '[0-9a-f]+')
 				
-				if [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
+				if ! [ -f ".${md5}" ];then
 				
-					NO_EXP_TOKENS[$link_count]="0"
+					mc_link_info=$(get_mc_link_info "$l" "$output")
 					
-				else
+					echo -n "$mc_link_info" >> ".${md5}"
 				
-					NO_EXP_TOKENS[$link_count]=$(netoken "$l")
-					
 				fi
 				
-				echo -ne "${NO_EXP_TOKENS[$link_count]}\n" >> ".${list}_tokens"
-					
 				link_count=$((link_count + 1))
-			
 			fi
-		
-		done < "$list"
+		fi
 	
-	fi
+	done < "$list"
 	
 	echo -ne " OK(${link_count})\n"
-	
-	link_count=0
 	
 	while read line; do
 	
@@ -184,23 +184,13 @@ if [ -z "$link" ]; then
 			
 		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
 	
-		if [ -n "$l" ]; then
+		if [ -n "$l" ];then
 			
-			if [ "${NO_EXP_TOKENS[$link_count]}" != "0" ]; then
-			
-				$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed" --no-exp-token="${NO_EXP_TOKENS[$link_count]}"
+			$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed"
 
-			else
-			
-				$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed"
-			fi
-			
-			link_count=$((link_count + 1))
 		fi
 	
 	done < "$list"
-	
-	rm ".${list}_tokens"
 
 	exit 0
 fi
@@ -258,43 +248,31 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	dl_temp_url=$($PHP_HELPERS jsonParam "$mega_res_json" g)
 else
 	#MEGACRYPTER LINK
-
-	MC_API_URL=$(echo -n "$link" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	wget_exit_code=1
+	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$link\"}" -O - "$MC_API_URL")
+	md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
 	
-	wget_exit_code=$?
-	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
-	fi	
-
-	if [ $(echo $info_link | grep '"error"') ]; then
-		error_code=$($PHP_HELPERS jsonParam "$info_link" error)
-		showError "ERROR: MEGACRYPTER $error_code"
-	fi
-
-	if [ -z "$output" ]; then
-		file_name=$($PHP_HELPERS jsonParam "$info_link" name)
+	if [ -f ".${md5}" ];then
+		mc_link_info=$(cat ".${md5}")
 	else
-		file_name="$output"
+		mc_link_info=$(get_mc_link_info "$link" "$output")
+		echo -n "$mc_link_info" >> ".${md5}"
 	fi
+		
+	IFS='@' read -a array <<< "$mc_link_info"
 	
-	if [ -z "$no_exp_token" ]; then
-		
-		expire=$($PHP_HELPERS jsonParam "$info_link" expire)
-
-		if [ "$expire" != "0" ]; then
-		
-			IFS='#' read -a array <<< "$expire"
-		
-			no_exp_token=${array[1]}
-		fi
-	fi
+	file_name=$(echo -n "${array[0]}" | base64 -d -i 2>/dev/null)
 	
-	path=$($PHP_HELPERS jsonParam "$info_link" path)
+	path=$(echo -n "${array[1]}" | base64 -d -i 2>/dev/null)
+	
+	file_size=${array[2]}
+	
+	mc_pass=${array[3]}
+	
+	key=${array[4]}
+	
+	no_exp_token=${array[5]}
 
 	if [ "$path" != "0" ] && [ -n "$path" ]; then
 	
@@ -305,9 +283,7 @@ else
 		
 		file_name="${path}${file_name}"
 	fi
-
-	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
-
+	
 	if [ "$mc_pass" != "0" ]; then
 		if [ -z "$password" ]; then
 			if [ $($PHP_HELPERS passwordCheck "$password" "$mc_pass") == "bad-password" ]; then
@@ -332,16 +308,15 @@ else
 		
 		iv=${array[1]}
 
-		hex_raw_key=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$info_link" key)) | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n $(b64_pad "$key") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
 
 		if [ -z "$output" ]; then
 			file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
 		fi
 	else
-		hex_raw_key=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$info_link" key)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n $(b64_pad "$key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	fi
-
-	file_size=$($PHP_HELPERS jsonParam "$info_link" size)
+	
 	hex_key=$(hrk2hk "$hex_raw_key")
 	
 	wget_exit_code=$?
@@ -431,5 +406,8 @@ fi
 
 mv "${file_name}.temp" "${file_name}"
 
+rm ".${md5}"
+
 echo -e "\nFILE DOWNLOADED as ${file_name} :)!\n"
+
 exit 0
