@@ -18,8 +18,8 @@ Bash script for download files from mega.nz and megacrypter clones
 ## Usage
 
 ```bash
-./megadown '[link]' [-k|--key mega_api_key] [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
-./megadown [-l|--list file_list] [-k|--key mega_api_key] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
+./megadown '[link]' [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
+./megadown [-l|--list file_list] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
 ```
 
 ## Parameters
@@ -28,5 +28,3 @@ Bash script for download files from mega.nz and megacrypter clones
  * `-o | --output`                store file with this name
  * `-s | --speed`                 download speed limit (500b, 500k, 2m)
  * `-p | --password`              password to protected files
- * `-k | --key`                   your mega API key
- * `-n | --no-expire-token`       no expire token for MC link
