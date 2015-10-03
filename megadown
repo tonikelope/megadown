@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.5"
+VERSION="1.8.6"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -93,15 +93,15 @@ function get_mc_link_info {
 	fi
 	
 	if [ -z "$2" ]; then
-		file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -i 2>/dev/null)
+		file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -w 0 -i 2>/dev/null)
 	else
-		file_name=$(echo -n "$2" | base64 -i 2>/dev/null)
+		file_name=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
 	fi
 	
 	path=$(echo -n $($PHP_HELPERS jsonParam "$info_link" path))
 	
 	if [ "$path" != "0" ]; then
-		path=$(echo -n "$path" | base64 -i 2>/dev/null)
+		path=$(echo -n "$path" | base64 -w 0 -i 2>/dev/null)
 	fi
 	
 	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
@@ -293,8 +293,6 @@ else
 	no_exp_token=${array[5]}
 
 	if [ "$path" != "0" ] && [ -n "$path" ]; then
-	
-		path=$(echo -n "$path" | base64 -i 2>/dev/null)
 		
 		if [ ! -d "$path" ]; then
 		
