@@ -216,7 +216,12 @@ if [ -z "$link" ]; then
 	link_count=0
 	
 	while read line; do
-	
+		
+		if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
+			
+			line=$(decrypt_md_link "$line")
+		fi
+		
 		l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 		
 		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
@@ -261,10 +266,12 @@ if [ -z "$link" ]; then
 fi
 
 
-if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" | grep -E -o 'mega://') ]; then
+if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
 	#MEGA.CO.NZ LINK
-		
-	link=$(decrypt_md_link "$link")
+	
+	if [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
+		link=$(decrypt_md_link "$link")
+	fi
 
 	link=$(php -r "echo str_ireplace('/#!N?', '/#N!', \$argv[1]);" "$link")
 
