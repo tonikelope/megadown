@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.8"
+VERSION="1.8.9"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -45,6 +45,27 @@ function b64_pad {
 	done
 
 	echo -n "$b64"
+}
+
+# 1:mega://enc link
+function decrypt_md_link {
+	
+	link=$(php -r "echo str_replace(array('-','_',','), array('+', '/', ''), \$argv[1]);" "$1")
+	
+	data=$(php -r "echo preg_replace('/^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$/i', '\$1', \$argv[1]);" "$link")
+
+	iv="79F10A01844A0B27FF5B2D4E0ED3163E"
+	
+	if [ $(echo $link | grep 'mega://enc?') ]; then
+		
+		key="6B316F36416C2D316B7A3F217A30357958585858585858585858585858585858"
+		
+	elif [ $(echo $link | grep 'mega://enc2?') ];then
+	
+		key="ED1F4C200B35139806B260563B3D3876F011B4750F3A1A4A5EFD0BBE67554B44"
+	fi
+
+	echo -n "https://mega.nz/#"$(echo -n $(b64_pad "$data") | $OPENSSL_AES_CBC_256_DEC -K "$key" -iv "$iv")
 }
 
 # 1:hex_raw_key
@@ -242,8 +263,8 @@ fi
 
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" | grep -E -o 'mega://') ]; then
 	#MEGA.CO.NZ LINK
-	
-	link=$($PHP_HELPERS decryptMegaDownloaderLinks "$link")
+		
+	link=$(decrypt_md_link "$link")
 
 	link=$(php -r "echo str_ireplace('/#!N?', '/#N!', \$argv[1]);" "$link")
 
