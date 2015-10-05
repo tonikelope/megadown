@@ -10,7 +10,7 @@ Bash script for download files from mega.nz and megacrypter
  * Download files from list
  * Speed limit
 
-## Dependencies:
+## "Exotic" dependencies:
 
  * OpenSSL (with support for AES 128 CTR and AES 128/256 CBC)
  * php-cli (for JSON decoding and fast MC password check)
