@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.6"
+VERSION="1.8.8"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -55,12 +55,13 @@ function hrk2hk {
 	printf "%016x" ${hk[*]}
 } 
 
+# 1:message_error
 function showError {
 	echo -e "\n$1\n" 1>&2
 	exit 1
 }
 
-
+# 1:link 2:alternative_file_name
 function get_mc_link_info {
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
@@ -72,12 +73,14 @@ function get_mc_link_info {
 	wget_exit_code=$?
 	
 	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+		echo -e "ERROR: Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+		return 1
 	fi	
 
 	if [ $(echo $info_link | grep '"error"') ]; then
 		error_code=$($PHP_HELPERS jsonParam "$info_link" error)
-		showError "ERROR: MEGACRYPTER $error_code"
+		echo -e "ERROR: MEGACRYPTER $error_code"
+		return 1
 	fi
 
 	expire=$($PHP_HELPERS jsonParam "$info_link" expire)
@@ -112,6 +115,45 @@ function get_mc_link_info {
 	
 	echo -n "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
+
+# 1:file_name 2:file_size 3:formatted_file_size [4:md5_mclink]
+function check_file_exists {
+
+	if [ -f "$1" ]; then
+		
+		actual_size=$(stat -c %s "$1")
+
+		if [ "$actual_size" == "$2" ]; then
+			
+			if [ -n "$4" ] && [ -f ".${4}" ];then
+				rm ".${4}"
+			fi
+			
+			showError "WARNING: File $1 exists. Download aborted!"
+		fi
+
+		download_message="\nFile $1 exists but with different size (${2} vs ${actual_size} bytes). Downloading [${3}] ...\n"
+		
+	else
+	
+		download_message="\nDownloading $1 [${3}] ...\n"
+		
+	fi
+}
+
+# 1:file_size
+function format_file_size {
+
+	if [ "$1" -ge 1073741824 ]; then
+		file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1073741824); print rounded }")" GB"
+	elif [ "$1" -ge 1048576 ];then
+		file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1048576); print rounded }")" MB"
+	else
+		file_size_f="${1} bytes"
+	fi
+	
+	echo -ne "$file_size_f"
+}	
 
 if [ -z "$1" ]; then
 	showHelp
@@ -249,6 +291,8 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" 
 		file_name="$output"
 	fi
 	
+	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")"
+	
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
 		mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"p\":\"$file_id\"}]"
 	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
@@ -275,6 +319,12 @@ else
 		mc_link_info=$(cat ".${md5}")
 	else
 		mc_link_info=$(get_mc_link_info "$link" "$output")
+		
+		if [ "$?" -eq 1 ];then
+			echo -e "$mc_link_info"
+			exit 1
+		fi
+		
 		echo -n "$mc_link_info" >> ".${md5}"
 	fi
 		
@@ -282,7 +332,11 @@ else
 	
 	file_name=$(echo -n "${array[0]}" | base64 -d -i 2>/dev/null)
 	
-	path=$(echo -n "${array[1]}" | base64 -d -i 2>/dev/null)
+	path=${array[1]}
+	
+	if [ "$path" != "0" ]; then
+		path=$(echo -n "$path" | base64 -d -i 2>/dev/null)
+	fi
 	
 	file_size=${array[2]}
 	
@@ -292,7 +346,7 @@ else
 	
 	no_exp_token=${array[5]}
 
-	if [ "$path" != "0" ] && [ -n "$path" ]; then
+	if [ "$path" != "0" ]; then
 		
 		if [ ! -d "$path" ]; then
 		
@@ -301,6 +355,8 @@ else
 		
 		file_name="${path}${file_name}"
 	fi
+	
+	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5"
 	
 	if [ "$mc_pass" != "0" ]; then
 		if [ -z "$password" ]; then
@@ -368,29 +424,15 @@ else
 fi
 
 if [ "$output" == "-" ]; then
+	
 	hex_iv="${hex_raw_key:32:16}0000000000000000"
+	
 	$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
 
 	exit 0
 fi
 
-if [ "$file_size" -ge 1024 ]; then
-	file_size_f="~"$(($file_size/(1024*1024)))" MB"
-else
-	file_size_f="${file_size} bytes"
-fi
-
-if [ -f "$file_name" ]; then
-	actual_size=$(wc -c "${file_name}" | cut -f 1 -d ' ')
-
-	if [ "$actual_size" == "$file_size" ]; then
-		showError "WARNING: File ${file_name} exists. Download aborted."
-	fi
-
-	echo -e "\nFile ${file_name} exists but with different size (${file_size} vs ${actual_size} bytes). Downloading [${file_size_f}] ...\n"
-else
-	echo -e "\nDownloading ${file_name} [${file_size_f}] ...\n"
-fi
+echo -e "$download_message"
 
 wget_exit_code=1
 
