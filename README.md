@@ -13,7 +13,7 @@ Bash script for download files from mega.nz and megacrypter
 ## Dependencies:
 
  * OpenSSL (with support for AES 128 CTR and AES 128 CBC)
- * php-cli (for JSON decoding and Megacrypter password protected links)
+ * php-cli (for JSON decoding and fast MC password check)
  * pv (monitor the progress of data)
 
 ## Usage
