@@ -228,7 +228,7 @@ if [ -z "$link" ]; then
 			
 			output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
 				
-			if ! [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
+			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
 				md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
 				
