@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.11"
+VERSION="1.8.12"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -82,7 +82,7 @@ function showError {
 	exit 1
 }
 
-# 1:link 2:alternative_file_name
+# 1:link
 function get_mc_link_info {
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
@@ -115,12 +115,8 @@ function get_mc_link_info {
 	else
 		no_exp_token="$expire"
 	fi
-	
-	if [ -z "$2" ]; then
-		file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -w 0 -i 2>/dev/null)
-	else
-		file_name=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
-	fi
+
+	file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -w 0 -i 2>/dev/null)
 	
 	path=$(echo -n $($PHP_HELPERS jsonParam "$info_link" path))
 	
@@ -215,28 +211,22 @@ if [ -z "$link" ]; then
 	
 	link_count=0
 	
-	while IFS='' read -r line || [[ -n "$line" ]]; do
+	while IFS='' read -r line || [ -n "$line" ]; do
 		
-		if [ -n "$line" ];then
+		if [ -n "$line" ] && ! [ $(echo -n "$line" | grep -E -o 'mega://enc') ];then
 		
-			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
-			
-				line=$(decrypt_md_link "$line")
-			fi
-			
 			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 			
-			output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
-				
 			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
 				md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
 				
 				if ! [ -f ".${md5}" ];then
 				
-					mc_link_info=$(get_mc_link_info "$link" "$output")
+					mc_link_info=$(get_mc_link_info "$link")
 					
 					echo -n "$mc_link_info" >> ".${md5}"
+					
 				fi
 				
 				link_count=$((link_count + 1))
@@ -247,18 +237,20 @@ if [ -z "$link" ]; then
 	
 	echo -ne " OK(${link_count} MC links found)\n"
 	
-	while IFS='' read -r line || [[ -n "$line" ]]; do
+	while IFS='' read -r line || [ -n "$line" ]; do
 	
 		if [ -n "$line" ];then
 		
 			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
 			
-				line=$(decrypt_md_link "$line")
-			fi
-		
-			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+				link=$(php -r "echo preg_replace('/^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+				
+				output=$(php -r "echo trim(preg_replace('/^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+			else
+				link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 			
-			output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+				output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+			fi
 			
 			$SCRIPT "$link" --output="$output" --password="$password" --speed="$speed"
 
@@ -350,7 +342,7 @@ else
 	if [ -f ".${md5}" ];then
 		mc_link_info=$(cat ".${md5}")
 	else
-		mc_link_info=$(get_mc_link_info "$link" "$output")
+		mc_link_info=$(get_mc_link_info "$link")
 		
 		if [ "$?" -eq 1 ];then
 			echo -e "$mc_link_info"
@@ -362,7 +354,11 @@ else
 		
 	IFS='@' read -a array <<< "$mc_link_info"
 	
-	file_name=$(echo -n "${array[0]}" | base64 -d -i 2>/dev/null)
+	if [ -z "$output" ];then 
+		file_name=$(echo -n "${array[0]}" | base64 -d -i 2>/dev/null)
+	else
+		file_name="$output"
+	fi
 	
 	path=${array[1]}
 	
