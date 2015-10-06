@@ -199,12 +199,18 @@ while true; do
 done
 
 if [ -z "$link" ]; then
+
 	if [ -z "$list" ]; then
+	
 		showHelp
+		
 		showError "ERROR: MEGA link or --list parameter is required"
+		
 	elif [ ! -f "$list" ]; then
+	
 		showHelp
-		showError "ERROR: MEGA list file ${list} not found"
+		
+		showError "ERROR: list file ${list} not found"
 	fi
 	
 	echo -ne "\n(Pre)reading mc links info..."
