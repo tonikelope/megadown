@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.10"
+VERSION="1.8.11"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -211,33 +211,32 @@ if [ -z "$link" ]; then
 		showError "ERROR: MEGA list file ${list} not found"
 	fi
 	
-	echo -ne "\nReading mc links info..."
+	echo -ne "\n(Pre)reading mc links info..."
 	
 	link_count=0
 	
-	while read line; do
+	while IFS='' read -r line || [[ -n "$line" ]]; do
 		
-		if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
-			
-			line=$(decrypt_md_link "$line")
-		fi
+		if [ -n "$line" ];then
 		
-		l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
-		
-		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
-
-		if [ -n "$l" ];then
+			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
 			
-			if ! [ $(echo -n "$l" | grep -E -o 'mega(\.co)?\.nz') ]; then
+				line=$(decrypt_md_link "$line")
+			fi
 			
-				md5=$(echo -n "$l" | md5sum | grep -E -o '[0-9a-f]+')
+			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+			
+			output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+				
+			if ! [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
+			
+				md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
 				
 				if ! [ -f ".${md5}" ];then
 				
-					mc_link_info=$(get_mc_link_info "$l" "$output")
+					mc_link_info=$(get_mc_link_info "$link" "$output")
 					
 					echo -n "$mc_link_info" >> ".${md5}"
-				
 				fi
 				
 				link_count=$((link_count + 1))
@@ -246,11 +245,16 @@ if [ -z "$link" ]; then
 	
 	done < "$list"
 	
-	echo -ne " OK(${link_count})\n"
+	echo -ne " OK(${link_count} MC links found)\n"
 	
-	while read line; do
+	while IFS='' read -r line || [[ -n "$line" ]]; do
 	
 		if [ -n "$line" ];then
+		
+			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
+			
+				line=$(decrypt_md_link "$line")
+			fi
 		
 			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 			
