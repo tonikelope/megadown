@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.9"
+VERSION="1.8.10"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -250,13 +250,13 @@ if [ -z "$link" ]; then
 	
 	while read line; do
 	
-		l=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+		if [ -n "$line" ];then
+		
+			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
 			
-		output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
-	
-		if [ -n "$l" ];then
+			output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
 			
-			$SCRIPT "$l" --output="$output" --password="$password" --key="$key" --speed="$speed"
+			$SCRIPT "$link" --output="$output" --password="$password" --speed="$speed"
 
 		fi
 	
