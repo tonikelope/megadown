@@ -267,14 +267,14 @@ if [ -z "$link" ]; then
 	exit 0
 fi
 
+if [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
+	link=$(decrypt_md_link "$link")
+fi
 
-if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
+if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
+	
 	#MEGA.CO.NZ LINK
 	
-	if [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
-		link=$(decrypt_md_link "$link")
-	fi
-
 	link=$(php -r "echo str_ireplace('/#!N?', '/#N!', \$argv[1]);" "$link")
 
 	file_id=$(php -r "echo preg_replace('/^.*\/#.*?!(.+)!.*$/', '\1', \$argv[1]);" "$link")
@@ -339,6 +339,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ] || [ $(echo -n "$link" 
 	
 	dl_temp_url=$($PHP_HELPERS jsonParam "$mega_res_json" g)
 else
+	
 	#MEGACRYPTER LINK
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
