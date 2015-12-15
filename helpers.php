@@ -22,7 +22,7 @@ function jsonParam($json, $var, $index=0, $undefined='', $bool=['true' => 1, 'fa
 }
 
 
-function passwordCheck($password, $mc_pass)
+function passwordCheck($password, $mc_pass, $bad_pass=0)
 {
 	list($iter_log2, $key_check, $salt, $iv) = explode('#', $mc_pass);
 
@@ -30,7 +30,7 @@ function passwordCheck($password, $mc_pass)
 
 	if (hash_hmac('sha256', $hmac, base64_decode($iv), true) !== base64_decode($key_check)) {
 
-		return 'bad-password';
+		return $bad_pass;
 	}
 
 	return bin2hex($hmac).'#'.bin2hex(base64_decode($iv));

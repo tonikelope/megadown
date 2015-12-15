@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.13"
+VERSION="1.8.14"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -400,7 +400,7 @@ else
 	
 	if [ "$mc_pass" != "0" ]; then
 		if [ -z "$password" ]; then
-			if [ $($PHP_HELPERS passwordCheck "$password" "$mc_pass") == "bad-password" ]; then
+			if [ $($PHP_HELPERS passwordCheck "$password" "$mc_pass") == "0" ]; then
 				pass=""
 			fi
 		fi
@@ -410,7 +410,7 @@ else
 
 			pass_hash=$($PHP_HELPERS passwordCheck "$pass" "$mc_pass")
 
-			until [ "$pass_hash" != "bad-password" ]; do
+			until [ "$pass_hash" != "0" ]; do
 				read -e -p "Wrong password! Try again: " pass
 				pass_hash=$($PHP_HELPERS passwordCheck "$pass" "$mc_pass")
 			done
