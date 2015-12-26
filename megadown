@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.15"
+VERSION="1.8.16"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -233,9 +233,10 @@ if [ -z "$link" ]; then
 				if ! [ -f ".${md5}" ];then
 				
 					mc_link_info=$(get_mc_link_info "$link")
-					
-					echo -n "$mc_link_info" >> ".${md5}"
-					
+
+					if ! [ "$?" -eq 1 ];then
+						echo -n "$mc_link_info" >> ".${md5}"
+					fi
 				fi
 				
 				link_count=$((link_count + 1))
