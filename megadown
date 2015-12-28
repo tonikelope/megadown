@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.16"
+VERSION="1.8.17"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -390,7 +390,7 @@ else
 	
 	no_exp_token=${array[5]}
 
-	if [ "$path" != "0" ]; then
+	if [ "$path" != "0" ] && [ "$path" != "" ]; then
 		
 		if [ ! -d "$path" ]; then
 		
