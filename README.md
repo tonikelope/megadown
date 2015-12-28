@@ -19,13 +19,19 @@ Bash script for download files from mega.nz and megacrypter
 ## Usage
 
 ```bash
-./megadown '[link]' [-o|--output new_file_name] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
-./megadown [-l|--list file_list] [-s|--speed speed_limit_bytes_second] [-p|--password mc_url_pass]
+Single url mode:            megadown ['URL'] [OPTION]...
+
+	Options explanation:
+	-o,	--output FILE_NAME    Store file with this name (.
+	-s,	--speed SPEED         Download speed limit (500b, 500k, 2m).
+	-p,	--password PASSWORD   Password for MegaCrypter links.
+
+Multi url mode:             megadown [-l URL_LIST_FILE] [OPTION]...
+
+	File line format:         URL [optional_file_name]
+
+	Options explanation:
+	-s,	--speed SPEED         Download speed limit (500b, 500k, 2m).
+	-p,	--password PASSWORD   Password for MegaCrypter links (same for every link in a list).
+
 ```
-
-## Parameters
-
- * `-l | --list`                  get links from text file. To set new names to listed files, add the new name after a space for each line like `https://mega-link/ new-name.zip`
- * `-o | --output`                store file with this name
- * `-s | --speed`                 download speed limit (500b, 500k, 2m)
- * `-p | --password`              password to protected files
