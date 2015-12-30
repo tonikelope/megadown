@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.18"
+VERSION="1.8.19"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -24,14 +24,14 @@ function showHelp {
 
 	echo -e "\nSingle url mode:           megadown ['URL'] [OPTION]...\n"
 	
-	echo -e "\tOptions explanation:"
-	echo -e "\t-o,\t--output FILE_NAME    Store file with this name (."
+	echo -e "\tOptions:"
+	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 
 	echo -e "\nMulti url mode:            megadown [-l URL_LIST_FILE] [OPTION]...\n"
 	echo -e "\tFile line format:          URL [optional_file_name]\n"
-	echo -e "\tOptions explanation:"
+	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 
