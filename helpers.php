@@ -1,51 +1,54 @@
 <?php
 
+#Remember: hash_hmac($algorithm, $data, $secret, $bin_output)
 
-function jsonParam($json, $var, $index=0, $undefined='', $bool=array('true' => 1, 'false' => 0))
-{
-	$val = json_decode($json);
-	
-	$val = is_array($val) ? $val[$index] : $val;
+class MegadownHelpers{
 
-	if (isset($val->$var) && is_bool($val->$var)) {
+	public static function json_param($json, $var, $index=0, $undefined='', $bool=array('true' => 1, 'false' => 0))
+	{
+		$val = json_decode($json);
+		
+		$val = is_array($val) ? $val[$index] : $val;
 
-		return $val->$var ? $bool['true'] : $bool['false'];
+		if (isset($val->$var) && is_bool($val->$var)) {
 
-	} elseif (isset($val->$var)) {
+			return $val->$var ? $bool['true'] : $bool['false'];
 
-		return $val->$var;
+		} elseif (isset($val->$var)) {
 
-	} else {
+			return $val->$var;
 
-		return $undefined;
-	}
-}
+		} else {
 
-
-function passwordCheck($password, $mc_pass, $bad_pass=0)
-{
-	list($iter_log2, $key_check, $salt, $iv) = explode('#', $mc_pass);
-
-	$hmac = passwordHMAC('sha256', base64_decode($salt), $password, pow(2, $iter_log2));
-
-	if (hash_hmac('sha256', $hmac, base64_decode($iv), true) !== base64_decode($key_check)) {
-
-		return $bad_pass;
+			return $undefined;
+		}
 	}
 
-	return bin2hex($hmac).'#'.bin2hex(base64_decode($iv));
-}
 
+	public static function password_check($password, $mc_pass, $bad_pass=0)
+	{
+		list($iter_log2, $key_check, $salt, $iv) = explode('#', $mc_pass);
 
-function passwordHMAC($algo, $salt, $pass, $iterations)
-{
-	# remember php_hmac (algorithm, data, key, bin_output)
-	for ($i = 1, $xor = ($last = hash_hmac($algo, $salt, $pass, true)); $i < $iterations; $i++) {
+		$hmac = self::password_hmac('sha256', base64_decode($salt), $password, pow(2, $iter_log2));
 
-		$xor ^= ($last = hash_hmac($algo, $last, $pass, true));
+		if (hash_hmac('sha256', $hmac, base64_decode($iv), true) !== base64_decode($key_check)) {
+
+			return $bad_pass;
+		}
+
+		return bin2hex($hmac).'#'.bin2hex(base64_decode($iv));
 	}
 
-	return $xor;
+
+	private static function password_hmac($algo, $salt, $pass, $iterations)
+	{
+		for ($i = 1, $xor = ($last = hash_hmac($algo, $salt, $pass, true)); $i < $iterations; $i++) {
+
+			$xor ^= ($last = hash_hmac($algo, $last, $pass, true));
+		}
+
+		return $xor;
+	}
 }
     
-echo call_user_func_array($argv[1], array_slice($argv, 2));
+echo call_user_func_array("MegadownHelpers::{$argv[1]}", array_slice($argv, 2));

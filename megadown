@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.19"
+VERSION="1.8.20"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -102,12 +102,12 @@ function get_mc_link_info {
 	fi	
 
 	if [ $(echo $info_link | grep '"error"') ]; then
-		error_code=$($PHP_HELPERS jsonParam "$info_link" error)
+		error_code=$($PHP_HELPERS json_param "$info_link" error)
 		echo -e "ERROR: MEGACRYPTER $error_code"
 		return 1
 	fi
 
-	expire=$($PHP_HELPERS jsonParam "$info_link" expire)
+	expire=$($PHP_HELPERS json_param "$info_link" expire)
 
 	if [ "$expire" != "0" ]; then
 	
@@ -119,19 +119,19 @@ function get_mc_link_info {
 		no_exp_token="$expire"
 	fi
 
-	file_name=$(echo -n $($PHP_HELPERS jsonParam "$info_link" name) | base64 -w 0 -i 2>/dev/null)
+	file_name=$(echo -n $($PHP_HELPERS json_param "$info_link" name) | base64 -w 0 -i 2>/dev/null)
 	
-	path=$(echo -n $($PHP_HELPERS jsonParam "$info_link" path))
+	path=$(echo -n $($PHP_HELPERS json_param "$info_link" path))
 	
 	if [ "$path" != "0" ]; then
 		path=$(echo -n "$path" | base64 -w 0 -i 2>/dev/null)
 	fi
 	
-	mc_pass=$($PHP_HELPERS jsonParam "$info_link" pass)
+	mc_pass=$($PHP_HELPERS json_param "$info_link" pass)
 	
-	file_size=$($PHP_HELPERS jsonParam "$info_link" size)
+	file_size=$($PHP_HELPERS json_param "$info_link" size)
 	
-	key=$($PHP_HELPERS jsonParam "$info_link" key)
+	key=$($PHP_HELPERS json_param "$info_link" key)
 	
 	echo -n "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
@@ -315,8 +315,8 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "ERROR: MEGA $error_code"
 	fi
 
-	file_size=$($PHP_HELPERS jsonParam "$mega_res_json" s)
-	at=$($PHP_HELPERS jsonParam "$mega_res_json" at)
+	file_size=$($PHP_HELPERS json_param "$mega_res_json" s)
+	at=$($PHP_HELPERS json_param "$mega_res_json" at)
 	hex_key=$(hrk2hk "$hex_raw_key")
 	at_dec_json=$(echo -n $(b64_pad "$at") | $OPENSSL_AES_CBC_128_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
 
@@ -325,7 +325,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi
 
 	if [ -z "$output" ]; then
-		file_name=$($PHP_HELPERS jsonParam "$(echo -n "$at_dec_json" | grep -E -o '\{.+\}')" n)
+		file_name=$($PHP_HELPERS json_param "$(echo -n "$at_dec_json" | grep -E -o '\{.+\}')" n)
 	else
 		file_name="$output"
 	fi
@@ -346,7 +346,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
 	fi	
 	
-	dl_temp_url=$($PHP_HELPERS jsonParam "$mega_res_json" g)
+	dl_temp_url=$($PHP_HELPERS json_param "$mega_res_json" g)
 else
 	
 	#MEGACRYPTER LINK
@@ -404,7 +404,7 @@ else
 	
 	if [ "$mc_pass" != "0" ]; then
 		if [ -z "$password" ]; then
-			if [ $($PHP_HELPERS passwordCheck "$password" "$mc_pass") == "0" ]; then
+			if [ $($PHP_HELPERS password_check "$password" "$mc_pass") == "0" ]; then
 				pass=""
 			fi
 		fi
@@ -412,11 +412,11 @@ else
 		if [ -z "$pass" ]; then
 			read -e -p "Link is password protected. Enter password: " pass
 
-			pass_hash=$($PHP_HELPERS passwordCheck "$pass" "$mc_pass")
+			pass_hash=$($PHP_HELPERS password_check "$pass" "$mc_pass")
 
 			until [ "$pass_hash" != "0" ]; do
 				read -e -p "Wrong password! Try again: " pass
-				pass_hash=$($PHP_HELPERS passwordCheck "$pass" "$mc_pass")
+				pass_hash=$($PHP_HELPERS password_check "$pass" "$mc_pass")
 			done
 		fi
 		
@@ -446,16 +446,16 @@ else
 	fi	
 
 	if [ $(echo $dl_link | grep '"error"') ]; then
-		error_code=$($PHP_HELPERS jsonParam "$dl_link" error)
+		error_code=$($PHP_HELPERS json_param "$dl_link" error)
 
 		showError "ERROR: MEGACRYPTER $error_code"
 	fi
 
-	dl_temp_url=$($PHP_HELPERS jsonParam "$dl_link" url)
+	dl_temp_url=$($PHP_HELPERS json_param "$dl_link" url)
 	
 	if [ "$mc_pass" != "0" ]; then
 
-		iv=$(echo -n $(b64_pad $($PHP_HELPERS jsonParam "$dl_link" pass)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		iv=$(echo -n $(b64_pad $($PHP_HELPERS json_param "$dl_link" pass)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 		
 		dl_temp_url=$(echo -n $(b64_pad "$dl_temp_url") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
 	fi
