@@ -1,7 +1,7 @@
 <?php
 
 
-function jsonParam($json, $var, $index=0, $undefined='', $bool=['true' => 1, 'false' => 0])
+function jsonParam($json, $var, $index=0, $undefined='', $bool=array('true' => 1, 'false' => 0))
 {
 	$val = json_decode($json);
 	
