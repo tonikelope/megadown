@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.8.20"
+VERSION="1.8.21"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -300,8 +300,6 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_json="[{\"a\":\"g\", \"n\":\"$file_id\"}]"
 	fi
 	
-	wget_exit_code=1
-	
 	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
 	
 	wget_exit_code=$?
@@ -400,8 +398,6 @@ else
 		file_name="${path}${file_name}"
 	fi
 	
-	download_message=$(check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5")
-	
 	if [ "$mc_pass" != "0" ]; then
 		if [ -z "$password" ]; then
 			if [ $($PHP_HELPERS password_check "$password" "$mc_pass") == "0" ]; then
@@ -434,12 +430,14 @@ else
 	else
 		hex_raw_key=$(echo -n $(b64_pad "$key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	fi
+
+	download_message=$(check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5")
 	
 	hex_key=$(hrk2hk "$hex_raw_key")
 	
-	wget_exit_code=$?
-	
 	dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" -O - "$MC_API_URL")
+
+	wget_exit_code=$?
 	
 	if [ "$wget_exit_code" -ne 0 ]; then
 		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
