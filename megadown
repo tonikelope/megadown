@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.1"
+VERSION="1.9.3"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -11,7 +11,7 @@ OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 
-for i in pv openssl wget php md5sum; do
+for i in python pv openssl wget md5sum; do
 	if [ "`which $i`" == "" ]; then
 		showHelp
 		showError "ERROR: Command $i is required and not installed"
@@ -53,9 +53,9 @@ function b64_pad {
 # 1:mega://enc link
 function decrypt_md_link {
 	
-	link=$(php -r "echo str_replace(array('-','_',','), array('+', '/', ''), \$argv[1]);" "$1")
-	
-	data=$(php -r "echo preg_replace('/^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$/i', '\$1', \$argv[1]);" "$link")
+	link=$($HELPERS urlb64_to_b64 "$1")
+
+	data=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$", "$link", 1)
 
 	iv="79F10A01844A0B27FF5B2D4E0ED3163E"
 	
@@ -223,8 +223,8 @@ if [ -z "$link" ]; then
 	while IFS='' read -r line || [ -n "$line" ]; do
 		
 		if [ -n "$line" ] && ! [ $(echo -n "$line" | grep -E -o 'mega://enc') ];then
-		
-			link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
+
+			link=$($HELPERS regex_imatch "^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$", "$line", 1)
 			
 			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
@@ -252,16 +252,17 @@ if [ -z "$link" ]; then
 		if [ -n "$line" ];then
 		
 			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
-			
-				link=$(php -r "echo preg_replace('/^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$/i', '\$1', \$argv[1]);" "$line")
-				
-				output=$(php -r "echo trim(preg_replace('/^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+
+				link=$($HELPERS regex_imatch "^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$", "$line", 1)
+
+				output=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$", "$line", 1, 1)
+
 
 			elif [ $(echo -n "$line" | grep -E -o 'https?://') ]; then
 
-				link=$(php -r "echo preg_replace('/^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$/i', '\$1', \$argv[1]);" "$line")
-			
-				output=$(php -r "echo trim(preg_replace('/^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$/i', '\$1', \$argv[1]));" "$line")
+				link=$($HELPERS regex_imatch ".*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$", "$line", 1)
+
+				output=$($HELPERS regex_imatch "^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$", "$line", 1, 1)
 
 			else
 				continue
@@ -283,12 +284,12 @@ fi
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	
 	#MEGA.CO.NZ LINK
-	
-	link=$(php -r "echo str_ireplace('/#!N?', '/#N!', \$argv[1]);" "$link")
 
-	file_id=$(php -r "echo preg_replace('/^.*\/#.*?!(.+)!.*$/', '\1', \$argv[1]);" "$link")
-	
-	file_key=$(php -r "echo preg_replace('/^.*\/#.*?!.+!(.+)$/', '\1', \$argv[1]);" "$link")
+	link=$($HELPERS str_ireplace "/#!N?" "/#N!" "$link")
+
+	file_id=$($HELPERS regex_match "^.*\/#.*?!(.+)!.*$" "$link" 1)
+
+	file_key=$($HELPERS regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
 	
 	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	
@@ -309,7 +310,8 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]; then
-		error_code=$(php -r "echo preg_replace('/^.*\[(.*?)\].*$/', '\$1',\$argv[1]);" "$mega_res_json")
+		error_code=$($HELPERS regex_match "^.*\[(.*?)\].*$" "$mega_res_json" 1)
+
 		showError "ERROR: MEGA $error_code"
 	fi
 

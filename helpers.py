@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import base64
 import binascii
+import re
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
 	
@@ -47,6 +48,48 @@ def password_hmac(data, secret, iterations):
 		i+=1
 
 	return xor if i == 1 else bytearray(xor)
+
+
+def regex_match(pattern, subject, group_index=0, trim_output=0):
+
+	m = re.search(pattern, subject)
+
+	res = m.group(int(group_index))
+
+	return res if trim_output == 0 else res.strip()
+
+
+def regex_imatch(pattern, subject, group_index=0, trim_output=0):
+
+	m = re.search(pattern, subject, re.IGNORECASE)
+
+	res = m.group(int(group_index))
+
+	return res if trim_output == 0 else res.strip()
+
+
+def str_replace(old, new, subject):
+
+	return subject.replace(old, new)
+
+
+def str_ireplace(old, new, subject):
+
+	pattern = re.compile(old, re.IGNORECASE)
+
+	return pattern.sub(new, subject)
+
+
+def urlb64_to_b64(string):
+
+	old=['-','_',',']
+
+	new=['+', '/', '']
+
+	for o, n in zip(old, new):
+		string = string.replace(o,n)
+
+	return string
 
 
 def call_user_func_array(callback, param_arr):

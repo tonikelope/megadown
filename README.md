@@ -10,11 +10,13 @@ Bash script for download files from mega.nz and megacrypter
  * Download files from list
  * Speed limit
 
-## "Exotic" dependencies:
+## Dependencies:
 
- * OpenSSL (with support for AES 128 CTR and AES 128/256 CBC)
- * python2.7/3.x (for JSON decoding and Megacrypter password links)
+ * OpenSSL with support for AES 128 CTR and AES 128/256 CBC (crypto stuff)
+ * python2.7/3.x (JSON parsing, regex group matching, string replacing and MegaCrypter password links)
+ * wget (downloading)
  * pv (monitor the progress of data)
+ * md5sum (temp files stuff)
 
 ## Usage
 
