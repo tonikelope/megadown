@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import base64
 import binascii
+import string
 import re
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
@@ -82,14 +83,9 @@ def str_ireplace(old, new, subject):
 
 def urlb64_to_b64(string):
 
-	old=['-','_',',']
+	trans_table = string.maketrans('-_', '+/')
 
-	new=['+', '/', '']
-
-	for o, n in zip(old, new):
-		string = string.replace(o,n)
-
-	return string
+	return string.translate(trans_table, ',')
 
 
 def call_user_func_array(callback, param_arr):
