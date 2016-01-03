@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.3"
+VERSION="1.9.4"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -310,8 +310,8 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]; then
+		
 		error_code=$($HELPERS regex_match "^.*\[(.*?)\].*$" "$mega_res_json" 1)
-
 		showError "ERROR: MEGA $error_code"
 	fi
 

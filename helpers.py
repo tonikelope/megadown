@@ -76,7 +76,7 @@ def str_replace(old, new, subject):
 
 def str_ireplace(old, new, subject):
 
-	pattern = re.compile(old, re.IGNORECASE)
+	pattern = re.compile(re.escape(old), re.IGNORECASE)
 
 	return pattern.sub(new, subject)
 
