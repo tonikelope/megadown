@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.10"
+VERSION="1.9.11"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -112,7 +112,7 @@ function decrypt_md_link {
 	
 	link=$(urlb64_to_b64 "$1")
 
-	data=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$", "$link", 1)
+	data=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$" "$link" 1)
 
 	iv="79F10A01844A0B27FF5B2D4E0ED3163E"
 	
@@ -279,7 +279,7 @@ if [ -z "$link" ]; then
 		
 		if [ -n "$line" ] && ! [ $(echo -n "$line" | grep -E -o 'mega://enc') ];then
 
-			link=$($HELPERS regex_imatch "^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$", "$line", 1)
+			link=$($HELPERS regex_imatch "^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
 			
 			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
@@ -308,16 +308,16 @@ if [ -z "$link" ]; then
 		
 			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
 
-				link=$($HELPERS regex_imatch "^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$", "$line", 1)
+				link=$($HELPERS regex_imatch "^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$" "$line" 1)
 
-				output=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$", "$line", 1, 1)
+				output=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$" "$line" 1 1)
 
 
 			elif [ $(echo -n "$line" | grep -E -o 'https?://') ]; then
 
-				link=$($HELPERS regex_imatch ".*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$", "$line", 1)
+				link=$($HELPERS regex_imatch ".*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
 
-				output=$($HELPERS regex_imatch "^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$", "$line", 1, 1)
+				output=$($HELPERS regex_imatch "^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$" "$line" 1 1)
 
 			else
 				continue
