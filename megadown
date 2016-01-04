@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.7"
+VERSION="1.9.8"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -97,10 +97,15 @@ function b64_pad {
 	echo -n "$b64"
 }
 
+function urlb64_to_b64 {
+
+	echo -n "$1" | tr "\-_" "+/" | tr -d ','
+}
+
 # 1:mega://enc link
 function decrypt_md_link {
 	
-	link=$($HELPERS urlb64_to_b64 "$1")
+	link=$(urlb64_to_b64 "$1")
 
 	data=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$", "$link", 1)
 

@@ -6,7 +6,6 @@ import hmac
 import hashlib
 import base64
 import binascii
-import string
 import re
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
@@ -28,12 +27,12 @@ def password_check(password, mc_pass_resp, bad_pass_msg=0):
 
 	mc_pass_items=mc_pass_resp.split('#')
 
-	mc_pass_hash=password_hmac(base64.b64decode(mc_pass_items[2]), password.encode(), 2**int(mc_pass_items[0]))
+	mc_pass_hmac=password_hmac(base64.b64decode(mc_pass_items[2]), password.encode(), 2**int(mc_pass_items[0]))
 
-	if not hmac.compare_digest(hmac.new(base64.b64decode(mc_pass_items[3]), mc_pass_hash, hashlib.sha256).digest(), base64.b64decode(mc_pass_items[1])):
+	if not hmac.compare_digest(hmac.new(base64.b64decode(mc_pass_items[3]), mc_pass_hmac, hashlib.sha256).digest(), base64.b64decode(mc_pass_items[1])):
 		return bad_pass_msg
 
-	return binascii.hexlify(mc_pass_hash).decode()+'#'+binascii.hexlify(base64.b64decode(mc_pass_items[3])).decode()
+	return binascii.hexlify(mc_pass_hmac).decode()+'#'+binascii.hexlify(base64.b64decode(mc_pass_items[3])).decode()
 
 
 def password_hmac(data, secret, iterations):
@@ -79,13 +78,6 @@ def str_ireplace(old, new, subject):
 	pattern = re.compile(re.escape(old), re.IGNORECASE)
 
 	return pattern.sub(new, subject)
-
-
-def urlb64_to_b64(string):
-
-	trans_table = string.maketrans('-_', '+/')
-
-	return string.translate(trans_table, ',')
 
 
 def call_user_func_array(callback, param_arr):
