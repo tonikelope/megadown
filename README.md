@@ -2,7 +2,7 @@
 
 Bash script for download files from mega.nz and megacrypter
 
-## Features
+## Features:
 
  * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported
  * Resume previous downloads
@@ -13,13 +13,12 @@ Bash script for download files from mega.nz and megacrypter
 ## Dependencies:
 
  * OpenSSL with support for AES 128 CTR and AES 128/256 CBC (crypto stuff)
- * python2.7/3.x (JSON parsing, regex group matching, string replacing and MegaCrypter password links)
+ * python >= 2.6 (JSON parsing, MegaCrypter password links regex group matching and strings stuff)
  * wget (downloading)
- * grep (basic searching)
+ * grep (basic filtering)
  * pv (monitor the progress of data)
- * md5sum (temp files stuff)
 
-## Usage
+## Usage:
 
 ```bash
 Single url mode:            megadown ['URL'] [OPTION]...

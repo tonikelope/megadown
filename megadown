@@ -1,22 +1,24 @@
 #!/bin/bash
 
-VERSION="1.9.5"
+VERSION="1.9.6"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
 HELPERS="$HERE/helpers.py"
+PYTHON_MIN_VER="2.6"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
 OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
+OPENSSL_MD5="openssl md5"
 
-for i in python pv openssl wget md5sum grep; do
-	if [ "`which $i`" == "" ]; then
-		showHelp
-		showError "ERROR: Command $i is required and not installed"
-	fi
-done
+
+# 1:message_error
+function showError {
+	echo -e "\n$1\n" 1>&2
+	exit 1
+}
 
 function showHelp {
 	echo -e "\nmegadown v$VERSION - https://github.com/tonikelope/megadown"
@@ -36,6 +38,51 @@ function showHelp {
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 
 	echo ''
+}
+
+function check_deps {
+
+	dep_error=0
+
+	for i in openssl python pv wget grep; do
+		
+		if [ "$(which "$i" 2>&1 | grep -o "which: no ${i} in")" ]; then
+			
+			echo -ne "\n[$i] is required and it's not installed"
+			dep_error=1
+		
+		else
+
+			case "$i" in
+			
+				openssl)     
+					for i in "aes-128-ctr" "aes-128-cbc" "aes-256-cbc"; do
+						if [ -z $(openssl enc --help 2>&1 | grep -o "$i") ]; then
+
+							echo -ne "Your openssl binary does not support ${i}"
+							dep_error=1
+
+						fi
+					done
+				;;
+
+				python)
+					
+					if [[ "$(python --version | grep -o -E '[0-9]\.[0-9]')" < "$PYTHON_MIN_VER" ]]; then
+
+						echo -ne "python >= ${PYTHON_MIN_VER} is required"
+						dep_error=1
+
+					fi
+				;;
+			esac
+		fi
+
+	done
+
+	if [ $dep_error -ne 0 ]; then
+		showError "ERROR: there are dependencies not present!"
+	fi
 }
 
 # 1:b64_encoded_String
@@ -78,12 +125,6 @@ function hrk2hk {
 
 	printf "%016x" ${hk[*]}
 } 
-
-# 1:message_error
-function showError {
-	echo -e "\n$1\n" 1>&2
-	exit 1
-}
 
 # 1:link
 function get_mc_link_info {
@@ -173,7 +214,11 @@ function format_file_size {
 	fi
 	
 	echo -ne "$file_size_f"
-}	
+}
+
+
+#MAIN STARTS HERE:
+check_deps
 
 if [ -z "$1" ]; then
 	showHelp
@@ -228,7 +273,7 @@ if [ -z "$link" ]; then
 			
 			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
-				md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
+				md5=$(echo -n "$link" | $OPENSSL_MD5 | grep -E -o '[0-9a-f]{32}')
 				
 				if ! [ -f ".${md5}" ];then
 				
@@ -355,7 +400,7 @@ else
 	
 	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	md5=$(echo -n "$link" | md5sum | grep -E -o '[0-9a-f]+')
+	md5=$(echo -n "$link" | $OPENSSL_MD5 | grep -E -o '[0-9a-f]{32}')
 	
 	if [ -f ".${md5}" ];then
 		mc_link_info=$(cat ".${md5}")
