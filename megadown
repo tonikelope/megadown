@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.6"
+VERSION="1.9.7"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -44,7 +44,7 @@ function check_deps {
 
 	dep_error=0
 
-	for i in openssl python pv wget grep; do
+	for i in openssl python pv wget; do
 		
 		if [ "$(which "$i" 2>&1 | grep -o "which: no ${i} in")" ]; then
 			
