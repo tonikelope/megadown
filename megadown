@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.9"
+VERSION="1.9.10"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -55,10 +55,13 @@ function check_deps {
 
 			case "$i" in
 			
-				openssl)     
+				openssl)
+
+					openssl_sup=$(openssl enc --help 2>&1)
+
 					for i in "aes-128-ctr" "aes-128-cbc" "aes-256-cbc"; do
 
-						if [ -z "$(openssl enc --help 2>&1 | grep -o "$i" | head -n1)" ]; then
+						if [ -z "$(echo -n "$openssl_sup" | grep -o "$i" | head -n1)" ]; then
 
 							echo -ne "Your openssl binary does not support ${i}"
 							dep_error=1
