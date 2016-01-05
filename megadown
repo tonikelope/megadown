@@ -226,6 +226,7 @@ function format_file_size {
 	echo -ne "$file_size_f"
 }
 
+# 1:mc_pass_info 2:pass_to_check
 function mc_pass_check {
 
 	IFS='#' read -a array <<< "$1"
