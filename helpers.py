@@ -5,7 +5,6 @@ import json
 import hmac
 import hashlib
 import base64
-import binascii
 import re
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
@@ -23,19 +22,11 @@ def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, '
 	return j[json_var]
 
 
-def password_check(password, mc_pass_resp, bad_pass_msg=0):
+def password_hmac(data, secret, iterations=1):
 
-	mc_pass_items=mc_pass_resp.split('#')
-
-	mc_pass_hmac=password_hmac(base64.b64decode(mc_pass_items[2]), password.encode(), 2**int(mc_pass_items[0]))
-
-	if not hmac.compare_digest(hmac.new(base64.b64decode(mc_pass_items[3]), mc_pass_hmac, hashlib.sha256).digest(), base64.b64decode(mc_pass_items[1])):
-		return bad_pass_msg
-
-	return binascii.hexlify(mc_pass_hmac).decode()+'#'+binascii.hexlify(base64.b64decode(mc_pass_items[3])).decode()
-
-
-def password_hmac(data, secret, iterations):
+	data = base64.b64decode(data)
+	secret = base64.b64decode(secret)
+	iterations = int(iterations)
 
 	i=1
 	xor = bytearray(hmac.new(secret, data, hashlib.sha256).digest())
@@ -47,7 +38,7 @@ def password_hmac(data, secret, iterations):
 		xor = [a ^ b for a, b in zip(xor, last)]
 		i+=1
 
-	return xor if i == 1 else bytearray(xor)
+	return base64.b64encode(xor if i == 1 else bytearray(xor)).decode()
 
 
 def regex_match(pattern, subject, group_index=0, trim_output=0):
