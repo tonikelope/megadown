@@ -24,14 +24,10 @@ def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, '
 
 def password_hmac(data, secret, iterations=1):
 
-	data = base64.b64decode(data)
-	secret = base64.b64decode(secret)
-	iterations = int(iterations)
-
-	i=1
-	xor = bytearray(hmac.new(secret, data, hashlib.sha256).digest())
-	last = xor
+	data, secret, iterations = base64.b64decode(data), base64.b64decode(secret), int(iterations)
+	last = xor = bytearray(hmac.new(secret, data, hashlib.sha256).digest())
 	
+	i=1
 	while i<iterations:
 
 		last = bytearray(hmac.new(secret, last, hashlib.sha256).digest())
@@ -44,7 +40,6 @@ def password_hmac(data, secret, iterations=1):
 def regex_match(pattern, subject, group_index=0, trim_output=0):
 
 	m = re.search(pattern, subject)
-
 	res = m.group(int(group_index)) if m != None else ''
 
 	return res if trim_output == 0 else res.strip()
@@ -53,7 +48,6 @@ def regex_match(pattern, subject, group_index=0, trim_output=0):
 def regex_imatch(pattern, subject, group_index=0, trim_output=0):
 
 	m = re.search(pattern, subject, re.IGNORECASE)
-
 	res = m.group(int(group_index)) if m != None else ''
 
 	return res if trim_output == 0 else res.strip()
