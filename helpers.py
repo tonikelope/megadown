@@ -59,11 +59,6 @@ def regex_imatch(pattern, subject, group_index=0, trim_output=0):
 	return res if trim_output == 0 else res.strip()
 
 
-def str_replace(old, new, subject):
-
-	return subject.replace(old, new)
-
-
 def str_ireplace(old, new, subject):
 
 	pattern = re.compile(re.escape(old), re.IGNORECASE)
