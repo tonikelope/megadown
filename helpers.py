@@ -45,7 +45,7 @@ def regex_match(pattern, subject, group_index=0, trim_output=0):
 
 	m = re.search(pattern, subject)
 
-	res = m.group(int(group_index))
+	res = m.group(int(group_index)) if m != None else ''
 
 	return res if trim_output == 0 else res.strip()
 
@@ -54,7 +54,7 @@ def regex_imatch(pattern, subject, group_index=0, trim_output=0):
 
 	m = re.search(pattern, subject, re.IGNORECASE)
 
-	res = m.group(int(group_index))
+	res = m.group(int(group_index)) if m != None else ''
 
 	return res if trim_output == 0 else res.strip()
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.14"
+VERSION="1.9.15"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -375,12 +375,19 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	
 	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	
-	mega_req_url="${MEGA_API_URL}/cs?id=&ak="
-	
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
-		mega_req_json="[{\"a\":\"g\", \"p\":\"$file_id\"}]"
+
+		mega_req_json="[{\"a\":\"g\", \"p\":\"${file_id}\"}]"
+		
+		mega_req_url="${MEGA_API_URL}/cs?id=&ak="
+
 	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
-		mega_req_json="[{\"a\":\"g\", \"n\":\"$file_id\"}]"
+
+		mega_req_json="[{\"a\":\"g\", \"n\":\"${file_id}\"}]"
+
+		folder_id=$($HELPERS regex_match "###n\=(.+)$" "$link" 1)
+
+		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
 	fi
 	
 	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
@@ -391,10 +398,8 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
 	fi	
 
-	if [ $(echo -n "$mega_res_json" | grep -E -o '\[\-[0-9]+\]') ]; then
-		
-		error_code=$($HELPERS regex_match "^.*\[(.*?)\].*$" "$mega_res_json" 1)
-		showError "ERROR: MEGA $error_code"
+	if [ $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+') ]; then
+		showError "ERROR: MEGA $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+')"
 	fi
 
 	file_size=$($HELPERS json_param "$mega_res_json" s)
