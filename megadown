@@ -90,7 +90,7 @@ function check_deps {
 	fi
 }
 
-# 1:b64_encoded_String
+# 1:b64_encoded_string
 function b64_pad {
 	b64=$(echo -n "$1" | tr '\-_' '+/')
 	pad=$(((4-${#1}%4)%4))
@@ -102,6 +102,7 @@ function b64_pad {
 	echo -n "$b64"
 }
 
+# 1:urlb64_encoded_string
 function urlb64_to_b64 {
 
 	echo -n "$1" | tr "\-_" "+/" | tr -d ','
