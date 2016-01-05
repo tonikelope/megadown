@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.13"
+VERSION="1.9.14"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -245,7 +245,7 @@ function mc_pass_check {
 	if [ "$($HELPERS password_hmac "$mc_pass_hash" "$iv")" != "$key_check" ]; then
 		echo -n "0"
 	else
-		echo "$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')#$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+		echo -n "$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')#$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
 	fi
 }
 
