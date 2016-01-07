@@ -364,7 +364,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
 	link=$(decrypt_md_link "$link")
 fi
 
-echo -ne "\nReading link metadata..."
+echo -e "\nReading link metadata..."
 
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	
