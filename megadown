@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.15"
+VERSION="1.9.16"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -13,6 +13,9 @@ OPENSSL_AES_CBC_128_DEC="openssl enc -a -A -d -aes-128-cbc"
 OPENSSL_AES_CBC_256_DEC="openssl enc -a -A -d -aes-256-cbc"
 OPENSSL_MD5="openssl md5"
 
+if [ ! -d ".megadown" ]; then
+	mkdir ".megadown"
+fi
 
 # 1:message_error
 function showError {
@@ -197,8 +200,8 @@ function check_file_exists {
 
 		if [ "$actual_size" == "$2" ]; then
 			
-			if [ -n "$4" ] && [ -f ".${4}" ];then
-				rm ".${4}"
+			if [ -n "$4" ] && [ -f ".megadown/${4}" ]; then
+				rm ".megadown/${4}"
 			fi
 			
 			showError "WARNING: File $1 exists. Download aborted!"
@@ -310,12 +313,12 @@ if [ -z "$link" ]; then
 			
 				md5=$(echo -n "$link" | $OPENSSL_MD5 | grep -E -o '[0-9a-f]{32}')
 				
-				if ! [ -f ".${md5}" ];then
+				if [ ! -f ".megadown/${md5}" ];then
 				
 					mc_link_info=$(get_mc_link_info "$link")
 
 					if ! [ "$?" -eq 1 ];then
-						echo -n "$mc_link_info" >> ".${md5}"
+						echo -n "$mc_link_info" >> ".megadown/${md5}"
 					fi
 				fi
 				
@@ -442,8 +445,8 @@ else
 	
 	md5=$(echo -n "$link" | $OPENSSL_MD5 | grep -E -o '[0-9a-f]{32}')
 	
-	if [ -f ".${md5}" ];then
-		mc_link_info=$(cat ".${md5}")
+	if [ -f ".megadown/${md5}" ];then
+		mc_link_info=$(cat ".megadown/${md5}")
 	else
 		mc_link_info=$(get_mc_link_info "$link")
 		
@@ -452,7 +455,7 @@ else
 			exit 1
 		fi
 		
-		echo -n "$mc_link_info" >> ".${md5}"
+		echo -n "$mc_link_info" >> ".megadown/${md5}"
 	fi
 		
 	IFS='@' read -a array <<< "$mc_link_info"
@@ -605,8 +608,8 @@ fi
 
 mv "${file_name}.temp" "${file_name}"
 
-if [ -f ".${md5}" ];then
-	rm ".${md5}"
+if [ -f ".megadown/${md5}" ];then
+	rm ".megadown/${md5}"
 fi
 
 echo -e "\nFILE DOWNLOADED as ${file_name} :)!\n"
