@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.16"
+VERSION="1.9.17"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -49,7 +49,7 @@ function check_deps {
 
 	for i in openssl python pv wget; do
 		
-		if [ "$(which "$i" 2>&1 | grep -o "which: no ${i} in")" ]; then
+		if [ -z "$(command -v "$i" 2>&1)" ]; then
 			
 			echo -ne "\n[$i] is required and it's not installed"
 			dep_error=1
