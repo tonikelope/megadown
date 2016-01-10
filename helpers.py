@@ -9,17 +9,23 @@ import re
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
 	
-	j = json.loads(json_data)
+	try:
 
-	if isinstance(j, list):
-		j=j[index]
+		j = json.loads(json_data)
 
-	if json_var not in j:
-		j[json_var] = undef_msg
-	elif isinstance(j[json_var], bool):
-		j[json_var] = bool_msg['true'] if j[json_var] == True else bool_msg['false']
-		
-	return j[json_var]
+		if isinstance(j, list):
+			j=j[index]
+
+		if json_var not in j:
+			j[json_var] = undef_msg
+		elif isinstance(j[json_var], bool):
+			j[json_var] = bool_msg['true'] if j[json_var] == True else bool_msg['false']
+			
+		return j[json_var]
+
+	except ValueError:
+
+		return undef_msg
 
 
 def password_hmac(data, secret, iterations=1):
