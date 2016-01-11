@@ -1,6 +1,6 @@
 # megadown
 
-Bash script for download files from mega.nz and megacrypter
+Bash (>=3.0) script for download files from mega.nz and megacrypter
 
 ## Features:
 
@@ -13,7 +13,7 @@ Bash script for download files from mega.nz and megacrypter
 ## Dependencies:
 
  * OpenSSL with support for AES 128 CTR and AES 128/256 CBC (crypto stuff)
- * python >= 2.6 (JSON parsing, MC password protected links, regex group matching and some string stuff)
+ * python >= 2.6 (JSON parsing and MC password protected links)
  * wget (downloading)
  * pv (monitor the progress of data)
 

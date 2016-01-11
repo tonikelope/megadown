@@ -1,10 +1,11 @@
 #!/bin/bash
 
-VERSION="1.9.17"
+VERSION="1.9.18"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
 HELPERS="$HERE/helpers.py"
+BASH_MIN_VER="3"
 PYTHON_MIN_VER="2.6"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
@@ -45,7 +46,7 @@ function showHelp {
 
 function check_deps {
 
-	dep_error=0
+	local dep_error=0
 
 	for i in openssl python pv wget; do
 		
@@ -66,7 +67,7 @@ function check_deps {
 
 						if [ -z "$(echo -n "$openssl_sup" | grep -o "$i" | head -n1)" ]; then
 
-							echo -ne "Your openssl binary does not support ${i}"
+							echo -n "Your openssl binary does not support ${i}"
 							dep_error=1
 
 						fi
@@ -78,7 +79,7 @@ function check_deps {
 					
 					if [[ "$(python --version 2>&1 | grep -o -E '[0-9]\.[0-9]')" < "$PYTHON_MIN_VER" ]]; then
 
-						echo -ne "python >= ${PYTHON_MIN_VER} is required"
+						echo -n "python >= ${PYTHON_MIN_VER} is required"
 						dep_error=1
 
 					fi
@@ -88,6 +89,11 @@ function check_deps {
 
 	done
 
+	if [[ "$(echo -n "$BASH_VERSION" | grep -o -E "[0-9]+" | head -n1)" < "$BASH_MIN_VER" ]]; then
+		echo -n "bash >= ${BASH_MIN_VER} is required"
+		dep_error=1
+	fi
+
 	if [ $dep_error -ne 0 ]; then
 		showError "ERROR: there are dependencies not present!"
 	fi
@@ -95,8 +101,8 @@ function check_deps {
 
 # 1:b64_encoded_string
 function b64_pad {
-	b64=$(echo -n "$1" | tr '\-_' '+/')
-	pad=$(((4-${#1}%4)%4))
+	local b64=$(echo -n "$1" | tr '\-_' '+/')
+	local pad=$(((4-${#1}%4)%4))
 
 	for i in $(seq 1 $pad); do
 		b64="${b64}="
@@ -114,11 +120,11 @@ function urlb64_to_b64 {
 # 1:mega://enc link
 function decrypt_md_link {
 	
-	link=$(urlb64_to_b64 "$1")
+	local link=$(urlb64_to_b64 "$1")
 
-	data=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$" "$link" 1)
+	local data=$(regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$" "$link" 1)
 
-	iv="79F10A01844A0B27FF5B2D4E0ED3163E"
+	local iv="79F10A01844A0B27FF5B2D4E0ED3163E"
 	
 	if [ $(echo $link | grep 'mega://enc?') ]; then
 		
@@ -134,6 +140,7 @@ function decrypt_md_link {
 
 # 1:hex_raw_key
 function hrk2hk {
+	declare -A hk
 	hk[0]=$(( 0x${1:0:16} ^ 0x${1:32:16} ))
 	hk[1]=$(( 0x${1:16:16} ^ 0x${1:48:16} ))
 
@@ -143,11 +150,11 @@ function hrk2hk {
 # 1:link
 function get_mc_link_info {
 	
-	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
+	local MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	wget_exit_code=1
+	local wget_exit_code=1
 	
-	info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
+	local info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
 	
 	wget_exit_code=$?
 	
@@ -157,36 +164,35 @@ function get_mc_link_info {
 	fi	
 
 	if [ $(echo $info_link | grep '"error"') ]; then
-		error_code=$($HELPERS json_param "$info_link" error)
+		local error_code=$($HELPERS json_param "$info_link" error)
 		echo -e "ERROR: MEGACRYPTER $error_code"
 		return 1
 	fi
 
-	expire=$($HELPERS json_param "$info_link" expire)
+	local expire=$($HELPERS json_param "$info_link" expire)
 
 	if [ "$expire" != "0" ]; then
 	
 		IFS='#' read -a array <<< "$expire"
 	
-		no_exp_token=${array[1]}
-		
+		local no_exp_token=${array[1]}
 	else
-		no_exp_token="$expire"
+		local no_exp_token="$expire"
 	fi
 
-	file_name=$(echo -n $($HELPERS json_param "$info_link" name) | base64 -w 0 -i 2>/dev/null)
+	local file_name=$(echo -n $($HELPERS json_param "$info_link" name) | base64 -w 0 -i 2>/dev/null)
 	
-	path=$(echo -n $($HELPERS json_param "$info_link" path))
+	local path=$(echo -n $($HELPERS json_param "$info_link" path))
 	
 	if [ "$path" != "0" ]; then
 		path=$(echo -n "$path" | base64 -w 0 -i 2>/dev/null)
 	fi
 	
-	mc_pass=$($HELPERS json_param "$info_link" pass)
+	local mc_pass=$($HELPERS json_param "$info_link" pass)
 	
-	file_size=$($HELPERS json_param "$info_link" size)
+	local file_size=$($HELPERS json_param "$info_link" size)
 	
-	key=$($HELPERS json_param "$info_link" key)
+	local key=$($HELPERS json_param "$info_link" key)
 	
 	echo -n "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
@@ -196,7 +202,7 @@ function check_file_exists {
 
 	if [ -f "$1" ]; then
 		
-		actual_size=$(stat -c %s "$1")
+		local actual_size=$(stat -c %s "$1")
 
 		if [ "$actual_size" == "$2" ]; then
 			
@@ -220,11 +226,11 @@ function check_file_exists {
 function format_file_size {
 
 	if [ "$1" -ge 1073741824 ]; then
-		file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1073741824); print rounded }")" GB"
+		local file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1073741824); print rounded }")" GB"
 	elif [ "$1" -ge 1048576 ];then
-		file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1048576); print rounded }")" MB"
+		local file_size_f=$(awk "BEGIN { rounded = sprintf(\"%.1f\", ${1}/1048576); print rounded }")" MB"
 	else
-		file_size_f="${1} bytes"
+		local file_size_f="${1} bytes"
 	fi
 	
 	echo -ne "$file_size_f"
@@ -235,17 +241,17 @@ function mc_pass_check {
 
 	IFS='#' read -a array <<< "$1"
 
-	iter_log2=${array[0]}
+	local iter_log2=${array[0]}
 
-	key_check=${array[1]}
+	local key_check=${array[1]}
 
-	salt=${array[2]}
+	local salt=${array[2]}
 	
-	iv=${array[3]}
+	local iv=${array[3]}
 
-	password=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
+	local password=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
 
-	mc_pass_hash=$($HELPERS password_hmac "$salt" "$password" $((2**$iter_log2)))
+	local mc_pass_hash=$($HELPERS password_hmac "$salt" "$password" $((2**$iter_log2)))
 
 	if [ "$($HELPERS password_hmac "$mc_pass_hash" "$iv")" != "$key_check" ]; then
 		echo -n "0"
@@ -254,6 +260,33 @@ function mc_pass_check {
 	fi
 }
 
+#1:string
+function trim {
+
+    if [[ "$1" =~ ' '*([^ ]|[^ ].*[^ ])' '* ]]; then 
+        echo -n "${BASH_REMATCH[1]}"
+    fi
+}
+
+#1:pattern 2:subject 3:group
+function regex_match {
+
+	if [[ "$2" =~ $1 ]]; then 
+        echo -n "${BASH_REMATCH[$3]}"
+    fi
+}
+
+#1:pattern 2:subject 3:group
+function regex_imatch {
+
+	shopt -s nocasematch
+
+	if [[ "$2" =~ $1 ]]; then 
+        echo -n "${BASH_REMATCH[$3]}"
+    fi
+
+    shopt -u nocasematch
+}
 
 #MAIN STARTS HERE:
 check_deps
@@ -263,8 +296,10 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-if [[ "$1" =~ ^http ]] || [[ "$1" =~ ^mega:// ]]; then
-	link="$1"
+p1="$(trim "$1")"
+
+if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
+	link="$p1"
 fi
 
 eval set -- "$(getopt -o "l:p:k:o:s:" -l "list:,password:,key:,output:,speed:" -- "$@")"
@@ -307,7 +342,7 @@ if [ -z "$link" ]; then
 		
 		if [ -n "$line" ] && ! [ $(echo -n "$line" | grep -E -o 'mega://enc') ];then
 
-			link=$($HELPERS regex_imatch "^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
+			link=$(regex_imatch "^.*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
 			
 			if [ $(echo -n "$link" | grep -E -o 'https?://[^/]+/!') ]; then
 			
@@ -336,16 +371,16 @@ if [ -z "$link" ]; then
 		
 			if [ $(echo -n "$line" | grep -E -o 'mega://enc') ]; then
 
-				link=$($HELPERS regex_imatch "^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$" "$line" 1)
+				link=$(regex_imatch "^.*?(mega:\/\/enc\d*?\?[a-z0-9_-]+).*$" "$line" 1)
 
-				output=$($HELPERS regex_imatch "^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$" "$line" 1 1)
+				output=$(regex_imatch "^.*?mega:\/\/enc\d*?\?[a-z0-9_-]+(.*)$" "$line" 1 1)
 
 
 			elif [ $(echo -n "$line" | grep -E -o 'https?://') ]; then
 
-				link=$($HELPERS regex_imatch ".*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
+				link=$(regex_imatch ".*?(https?\:\/\/[^\/]+\/[#!0-9a-z_-]+).*$" "$line" 1)
 
-				output=$($HELPERS regex_imatch "^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$" "$line" 1 1)
+				output=$(regex_imatch "^.*?https?\:\/\/[^\/]+\/[#!0-9a-z_-]+(.*)$" "$line" 1 1)
 
 			else
 				continue
@@ -370,11 +405,11 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	
 	#MEGA.CO.NZ LINK
 
-	link=$($HELPERS str_ireplace "/#!N?" "/#N!" "$link")
+	link=${link//#!N?/#N!}
 
-	file_id=$($HELPERS regex_match "^.*\/#.*?!(.+)!.*$" "$link" 1)
+	file_id=$(regex_match "^.*\/#.*?!(.+)!.*$" "$link" 1)
 
-	file_key=$($HELPERS regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
+	file_key=$(regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
 	
 	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	
@@ -388,7 +423,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 		mega_req_json="[{\"a\":\"g\", \"n\":\"${file_id}\"}]"
 
-		folder_id=$($HELPERS regex_match "###n\=(.+)$" "$link" 1)
+		folder_id=$(regex_match "###n\=(.+)$" "$link" 1)
 
 		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
 	fi
