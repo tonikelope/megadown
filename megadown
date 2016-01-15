@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.18"
+VERSION="1.9.19"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -100,8 +100,8 @@ function check_deps {
 }
 
 # 1:b64_encoded_string
-function b64_pad {
-	local b64=$(echo -n "$1" | tr '\-_' '+/')
+function urlb64_to_b64 {
+	local b64=$(echo -n "$1" | tr '\-_' '+/' | tr -d ',')
 	local pad=$(((4-${#1}%4)%4))
 
 	for i in $(seq 1 $pad); do
@@ -111,31 +111,23 @@ function b64_pad {
 	echo -n "$b64"
 }
 
-# 1:urlb64_encoded_string
-function urlb64_to_b64 {
-
-	echo -n "$1" | tr "\-_" "+/" | tr -d ','
-}
-
 # 1:mega://enc link
 function decrypt_md_link {
-	
-	local link=$(urlb64_to_b64 "$1")
 
-	local data=$(regex_imatch "^.*?mega:\/\/enc\d*?\?([a-z0-9\/+]+).*?$" "$link" 1)
+	local data=$(regex_imatch "^.*?mega:\/\/enc[0-9]*?\?([a-z0-9_,-]+).*?$" "$1" 1)
 
 	local iv="79F10A01844A0B27FF5B2D4E0ED3163E"
 	
-	if [ $(echo $link | grep 'mega://enc?') ]; then
+	if [ $(echo -n "$1" | grep 'mega://enc?') ]; then
 		
 		key="6B316F36416C2D316B7A3F217A30357958585858585858585858585858585858"
 		
-	elif [ $(echo $link | grep 'mega://enc2?') ];then
+	elif [ $(echo -n "$1" | grep 'mega://enc2?') ];then
 	
 		key="ED1F4C200B35139806B260563B3D3876F011B4750F3A1A4A5EFD0BBE67554B44"
 	fi
 
-	echo -n "https://mega.nz/#"$(echo -n $(b64_pad "$data") | $OPENSSL_AES_CBC_256_DEC -K "$key" -iv "$iv")
+	echo -n "https://mega.nz/#"$(echo -n $(urlb64_to_b64 "$data") | $OPENSSL_AES_CBC_256_DEC -K "$key" -iv "$iv")
 }
 
 # 1:hex_raw_key
@@ -249,14 +241,18 @@ function mc_pass_check {
 	
 	local iv=${array[3]}
 
-	local password=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
+	local password="$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)"
 
-	local mc_pass_hash=$($HELPERS password_hmac "$salt" "$password" $((2**$iter_log2)))
+	local mc_pass_hash="$($HELPERS PBKDF2 "$salt" "$password" $((2**$iter_log2)))"
 
-	if [ "$($HELPERS password_hmac "$mc_pass_hash" "$iv")" != "$key_check" ]; then
+	mc_pass_hash="$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+
+	iv="$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+
+	if [ "$(echo -n "$key_check" | $OPENSSL_AES_CBC_256_DEC -K "$mc_pass_hash" -iv "$iv" 2>/dev/null | od -An -t x1 | tr -d '\n ')" != "$mc_pass_hash" ]; then
 		echo -n "0"
 	else
-		echo -n "$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')#$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+		echo -n "${mc_pass_hash}#${iv}"
 	fi
 }
 
@@ -411,7 +407,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 	file_key=$(regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
 	
-	hex_raw_key=$(echo -n $(b64_pad $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	hex_raw_key=$(echo -n $(urlb64_to_b64 $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
 
@@ -443,7 +439,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	file_size=$($HELPERS json_param "$mega_res_json" s)
 	at=$($HELPERS json_param "$mega_res_json" at)
 	hex_key=$(hrk2hk "$hex_raw_key")
-	at_dec_json=$(echo -n $(b64_pad "$at") | $OPENSSL_AES_CBC_128_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
+	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
 
 	if [ ! $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]; then
 		showError "ERROR: MEGA bad link"
@@ -557,13 +553,13 @@ else
 		
 		iv=${array[1]}
 
-		hex_raw_key=$(echo -n $(b64_pad "$key") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n "$key" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
 
 		if [ -z "$output" ]; then
-			file_name=$(echo -n $(b64_pad "$file_name") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
+			file_name=$(echo -n "$file_name" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
 		fi
 	else
-		hex_raw_key=$(echo -n $(b64_pad "$key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n "$key" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	fi
 
 	download_message=$(check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5")
@@ -588,9 +584,9 @@ else
 	
 	if [ "$mc_pass" != "0" ]; then
 
-		iv=$(echo -n $(b64_pad $($HELPERS json_param "$dl_link" pass)) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 		
-		dl_temp_url=$(echo -n $(b64_pad "$dl_temp_url") | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
+		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
 	fi
 fi
 

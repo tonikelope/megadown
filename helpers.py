@@ -27,7 +27,8 @@ def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, '
 		return undef_msg
 
 
-def password_hmac(data, secret, iterations=1):
+#Input/output base64 encoded
+def PBKDF2(data, secret, iterations=1):
 
 	data, secret, iterations = base64.b64decode(data), base64.b64decode(secret), int(iterations)
 	last = xor = bytearray(hmac.new(secret, data, hashlib.sha256).digest())
