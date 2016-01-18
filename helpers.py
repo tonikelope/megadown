@@ -5,6 +5,7 @@ import json
 import hmac
 import hashlib
 import base64
+import struct
 
 def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, 'false':0}):
 	
@@ -31,6 +32,9 @@ def json_param(json_data, json_var, index=0, undef_msg='', bool_msg={'true':1, '
 def PBKDF2(data, secret, iterations=1):
 
 	data, secret, iterations = base64.b64decode(data), base64.b64decode(secret), int(iterations)
+
+	data+=struct.pack('>i', 1)
+
 	last = xor = bytearray(hmac.new(secret, data, hashlib.sha256).digest())
 	
 	i=1
