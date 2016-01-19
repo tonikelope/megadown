@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.20"
+VERSION="1.9.21"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -439,7 +439,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	file_size=$($HELPERS json_param "$mega_res_json" s)
 	at=$($HELPERS json_param "$mega_res_json" at)
 	hex_key=$(hrk2hk "$hex_raw_key")
-	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K $hex_key -iv "00000000000000000000000000000000" -nopad)
+	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K "$hex_key" -iv "00000000000000000000000000000000" -nopad)
 
 	if [ ! $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]; then
 		showError "ERROR: MEGA bad link"
@@ -553,10 +553,10 @@ else
 		
 		iv=${array[1]}
 
-		hex_raw_key=$(echo -n "$key" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv" | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n "$key" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv" | od -An -t x1 | tr -d '\n ')
 
 		if [ -z "$output" ]; then
-			file_name=$(echo -n "$file_name" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
+			file_name=$(echo -n "$file_name" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 		fi
 	else
 		hex_raw_key=$(echo -n "$key" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
@@ -586,7 +586,7 @@ else
 
 		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 		
-		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K $pass_hash -iv "$iv")
+		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
 fi
 
@@ -600,7 +600,7 @@ if [ "$output" == "-" ]; then
 	
 	hex_iv="${hex_raw_key:32:16}0000000000000000"
 	
-	$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv
+	$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv"
 
 	exit 0
 fi
@@ -620,10 +620,10 @@ until [ "$wget_exit_code" -eq 0 ]; do
 
 		truncate -s $offset "${file_name}.temp"
 
-		$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv >> "${file_name}.temp"
+		$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
 	else
 		hex_iv="${hex_raw_key:32:16}0000000000000000"
-		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K $hex_key -iv $hex_iv > "${file_name}.temp"
+		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
 	fi
 
 	wget_exit_code=$?
