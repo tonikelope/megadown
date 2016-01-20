@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.21"
+VERSION="1.9.22"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -634,7 +634,7 @@ until [ "$wget_exit_code" -eq 0 ]; do
 done
 
 if [ ! -f "${file_name}.temp" ]; then
-	showError "ERROR: FILE ${file_name} COULD NOT BE DOWNLOADED :(!"
+	showError "ERROR: FILE COULD NOT BE DOWNLOADED :(!"
 fi
 
 mv "${file_name}.temp" "${file_name}"
@@ -643,6 +643,6 @@ if [ -f ".megadown/${md5}" ];then
 	rm ".megadown/${md5}"
 fi
 
-echo -e "\nFILE DOWNLOADED as ${file_name} :)!\n"
+echo -e "\nFILE DOWNLOADED!\n"
 
 exit 0
