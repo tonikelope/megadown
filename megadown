@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.22"
+VERSION="1.10.1"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -144,14 +144,14 @@ function get_mc_link_info {
 	
 	local MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	local wget_exit_code=1
+	local DL_exit_code=1
 	
-	local info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
+	local info_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"info\", \"link\":\"$1\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
 	
-	wget_exit_code=$?
+	DL_exit_code=$?
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		echo -e "ERROR: Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$DL_exit_code" -ne 0 ]; then
+		echo -e "ERROR: Oooops, something went bad. EXIT CODE (${DL_exit_code})"
 		return 1
 	fi	
 
@@ -286,6 +286,23 @@ function regex_imatch {
 
 #MAIN STARTS HERE:
 check_deps
+
+#If curl is installed we use it (default wget)
+if [ ! -z "$(command -v curl 2>&1)" ]; then
+	DL_BIN="curl"
+	DL_FAIL="--fail"
+	DL_QUIET="-s"
+	DL_HEADER="--header"
+	DL_POSTDATA="--data"
+	DL_OUTPUT_STDOUT=""
+else
+	DL_BIN="wget"
+	DL_FAIL=""
+	DL_QUIET="-q"
+	DL_HEADER="--header"
+	DL_POSTDATA="--post-data"
+	DL_OUTPUT_STDOUT="-O -"
+fi
 
 if [ -z "$1" ]; then
 	showHelp
@@ -424,12 +441,12 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
 	fi
 	
-	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
+	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
 	
-	wget_exit_code=$?
+	DL_exit_code=$?
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$DL_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${DL_exit_code})"
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+') ]; then
@@ -459,15 +476,15 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"n\":\"$file_id\"}]"
 	fi
 	
-	wget_exit_code=$?
+	DL_exit_code=$?
 	
-	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
+	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$DL_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${DL_exit_code})"
 	fi	
 	
-	dl_temp_url=$($HELPERS json_param "$mega_res_json" g)
+	DL_temp_url=$($HELPERS json_param "$mega_res_json" g)
 else
 	
 	#MEGACRYPTER LINK
@@ -566,50 +583,50 @@ else
 	
 	hex_key=$(hrk2hk "$hex_raw_key")
 	
-	dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" -O - "$MC_API_URL")
+	DL_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
 
-	wget_exit_code=$?
+	DL_exit_code=$?
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$DL_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${DL_exit_code})"
 	fi	
 
-	if [ $(echo $dl_link | grep '"error"') ]; then
-		error_code=$($HELPERS json_param "$dl_link" error)
+	if [ $(echo $DL_link | grep '"error"') ]; then
+		error_code=$($HELPERS json_param "$DL_link" error)
 
 		showError "ERROR: MEGACRYPTER $error_code"
 	fi
 
-	dl_temp_url=$($HELPERS json_param "$dl_link" url)
+	DL_temp_url=$($HELPERS json_param "$DL_link" url)
 	
 	if [ "$mc_pass" != "0" ]; then
 
-		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		iv=$(echo -n $($HELPERS json_param "$DL_link" pass) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 		
-		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
+		DL_temp_url=$(echo -n "$DL_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
 fi
 
 if [ -z "$speed" ]; then
-	DL_COMMAND="wget -q -O - "
+	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} ${DL_OUTPUT_STDOUT} "
 else
-	DL_COMMAND="wget -q --limit-rate $speed -O - "
+	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} --limit-rate $speed ${DL_OUTPUT_STDOUT} "
 fi
 
 if [ "$output" == "-" ]; then
 	
 	hex_iv="${hex_raw_key:32:16}0000000000000000"
 	
-	$DL_COMMAND "$dl_temp_url" | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv"
+	$DL_COMMAND "$DL_temp_url" | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv"
 
 	exit 0
 fi
 
 echo -e "$download_message"
 
-wget_exit_code=1
+DL_exit_code=1
 
-until [ "$wget_exit_code" -eq 0 ]; do
+until [ "$DL_exit_code" -eq 0 ]; do
 	if [ -f "${file_name}.temp" ]; then
 		echo -e "(Resuming previous download ...)\n"
 
@@ -620,16 +637,16 @@ until [ "$wget_exit_code" -eq 0 ]; do
 
 		truncate -s $offset "${file_name}.temp"
 
-		$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
+		$DL_COMMAND "$DL_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
 	else
 		hex_iv="${hex_raw_key:32:16}0000000000000000"
-		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
+		$DL_COMMAND "$DL_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
 	fi
 
-	wget_exit_code=$?
+	DL_exit_code=$?
 
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, download failed! WGET EXIT CODE (${wget_exit_code})"
+	if [ "$DL_exit_code" -ne 0 ]; then
+		showError "Oooops, download failed! EXIT CODE (${DL_exit_code})"
 	fi	
 done
 
