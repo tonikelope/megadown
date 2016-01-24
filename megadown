@@ -48,7 +48,26 @@ function check_deps {
 
 	local dep_error=0
 
-	for i in openssl python pv wget; do
+	if [ ! -z "$(command -v curl 2>&1)" ]; then
+		DL_BIN="curl"
+		DL_FAIL="--fail"
+		DL_QUIET="-s"
+		DL_HEADER="--header"
+		DL_POSTDATA="--data"
+		DL_OUTPUT_STDOUT=""
+	elif [ ! -z "$(command -v wget 2>&1)" ]; then
+		DL_BIN="wget"
+		DL_FAIL=""
+		DL_QUIET="-q"
+		DL_HEADER="--header"
+		DL_POSTDATA="--post-data"
+		DL_OUTPUT_STDOUT="-O -"
+	else
+		echo -ne "\nwget OR curl is required and it's not installed"
+		dep_error=1
+	fi
+
+	for i in openssl python pv; do
 		
 		if [ -z "$(command -v "$i" 2>&1)" ]; then
 			
@@ -286,23 +305,6 @@ function regex_imatch {
 
 #MAIN STARTS HERE:
 check_deps
-
-#If curl is installed we use it (default wget)
-if [ ! -z "$(command -v curl 2>&1)" ]; then
-	DL_BIN="curl"
-	DL_FAIL="--fail"
-	DL_QUIET="-s"
-	DL_HEADER="--header"
-	DL_POSTDATA="--data"
-	DL_OUTPUT_STDOUT=""
-else
-	DL_BIN="wget"
-	DL_FAIL=""
-	DL_QUIET="-q"
-	DL_HEADER="--header"
-	DL_POSTDATA="--post-data"
-	DL_OUTPUT_STDOUT="-O -"
-fi
 
 if [ -z "$1" ]; then
 	showHelp
