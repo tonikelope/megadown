@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.22"
+VERSION="1.9.22-2"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -559,7 +559,7 @@ else
 			file_name=$(echo -n "$file_name" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 		fi
 	else
-		hex_raw_key=$(echo -n "$key" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n $(urlb64_to_b64 "$key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	fi
 
 	download_message=$(check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5")
