@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.24"
+VERSION="1.9.25"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -413,7 +413,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 	file_key=$(regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
 	
-	hex_raw_key=$(echo -n $(urlb64_to_b64 $file_key) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	hex_raw_key=$(echo -n $(urlb64_to_b64 "$file_key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 	
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
 
