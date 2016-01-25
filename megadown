@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.23"
+VERSION="1.9.24"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -153,8 +153,6 @@ function get_mc_link_info {
 	local download_exit_code=1
 
 	local info_link=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "{\"m\":\"info\", \"link\":\"$1\"}" "$MC_API_URL")
-
-	echo "$info_link" > lolazo.txt
 	
 	download_exit_code=$?
 	
