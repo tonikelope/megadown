@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.22-2"
+VERSION="1.9.23"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -25,30 +25,36 @@ function showError {
 }
 
 function showHelp {
-	echo -e "\nmegadown v$VERSION - https://github.com/tonikelope/megadown"
+	echo -e "\nmegadown $VERSION - https://github.com/tonikelope/megadown"
 	echo -e "\ncli downloader for mega.nz and megacrypter"
-
 	echo -e "\nSingle url mode:           megadown ['URL'] [OPTION]...\n"
-	
 	echo -e "\tOptions:"
 	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
-
-	echo -e "\nMulti url mode:            megadown [-l URL_LIST_FILE] [OPTION]...\n"
-	echo -e "\tFile line format:          URL [optional_file_name]\n"
+	echo -e "\n\nMulti url mode:          megadown [-l URL_LIST_FILE] [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
-
-	echo ''
+	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
 function check_deps {
 
 	local dep_error=0
 
-	for i in openssl python pv wget; do
+	if [ ! -z "$(command -v curl 2>&1)" ]; then
+		DL_COM="curl --fail -s"
+		DL_COM_PDATA="--data"
+	elif [ ! -z "$(command -v wget 2>&1)" ]; then
+		DL_COM="wget -q -O -"
+		DL_COM_PDATA="--post-data"
+	else
+		echo -ne "\nwget OR curl is required and it's not installed"
+		dep_error=1
+	fi
+
+	for i in openssl python pv; do
 		
 		if [ -z "$(command -v "$i" 2>&1)" ]; then
 			
@@ -144,14 +150,16 @@ function get_mc_link_info {
 	
 	local MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
 	
-	local wget_exit_code=1
+	local download_exit_code=1
+
+	local info_link=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "{\"m\":\"info\", \"link\":\"$1\"}" "$MC_API_URL")
+
+	echo "$info_link" > lolazo.txt
 	
-	local info_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"info\", \"link\":\"$1\"}" -O - "$MC_API_URL")
+	download_exit_code=$?
 	
-	wget_exit_code=$?
-	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		echo -e "ERROR: Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$download_exit_code" -ne 0 ]; then
+		echo -e "ERROR: Oooops, something went bad. EXIT CODE (${download_exit_code})"
 		return 1
 	fi	
 
@@ -424,12 +432,12 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
 	fi
 	
-	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
+	mega_res_json=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "$mega_req_json" "$mega_req_url")
 	
-	wget_exit_code=$?
+	download_exit_code=$?
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$download_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${download_exit_code})"
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+') ]; then
@@ -459,12 +467,12 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_json="[{\"a\":\"g\", \"g\":\"1\", \"n\":\"$file_id\"}]"
 	fi
 	
-	wget_exit_code=$?
+	download_exit_code=$?
 	
-	mega_res_json=$(wget -q --header='Content-Type: application/json' --post-data "$mega_req_json" -O - "$mega_req_url")
+	mega_res_json=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "$mega_req_json" "$mega_req_url")
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$download_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${download_exit_code})"
 	fi	
 	
 	dl_temp_url=$($HELPERS json_param "$mega_res_json" g)
@@ -566,12 +574,12 @@ else
 	
 	hex_key=$(hrk2hk "$hex_raw_key")
 	
-	dl_link=$(wget -q --header='Content-Type: application/json' --post-data "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" -O - "$MC_API_URL")
+	dl_link=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" "$MC_API_URL")
 
-	wget_exit_code=$?
+	download_exit_code=$?
 	
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, something went bad. WGET EXIT CODE (${wget_exit_code})"
+	if [ "$download_exit_code" -ne 0 ]; then
+		showError "Oooops, something went bad. EXIT CODE (${download_exit_code})"
 	fi	
 
 	if [ $(echo $dl_link | grep '"error"') ]; then
@@ -591,9 +599,9 @@ else
 fi
 
 if [ -z "$speed" ]; then
-	DL_COMMAND="wget -q -O - "
+	DL_COMMAND="$DL_COM"
 else
-	DL_COMMAND="wget -q --limit-rate $speed -O - "
+	DL_COMMAND="$DL_COM --limit-rate $speed"
 fi
 
 if [ "$output" == "-" ]; then
@@ -607,9 +615,9 @@ fi
 
 echo -e "$download_message"
 
-wget_exit_code=1
+download_exit_code=1
 
-until [ "$wget_exit_code" -eq 0 ]; do
+until [ "$download_exit_code" -eq 0 ]; do
 	if [ -f "${file_name}.temp" ]; then
 		echo -e "(Resuming previous download ...)\n"
 
@@ -626,10 +634,10 @@ until [ "$wget_exit_code" -eq 0 ]; do
 		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
 	fi
 
-	wget_exit_code=$?
+	download_exit_code=$?
 
-	if [ "$wget_exit_code" -ne 0 ]; then
-		showError "Oooops, download failed! WGET EXIT CODE (${wget_exit_code})"
+	if [ "$download_exit_code" -ne 0 ]; then
+		showError "Oooops, download failed! EXIT CODE (${download_exit_code})"
 	fi	
 done
 
