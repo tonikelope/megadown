@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.10.1"
+VERSION="1.10.2"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -25,7 +25,7 @@ function showError {
 }
 
 function showHelp {
-	echo -e "\nmegadown v$VERSION - https://github.com/tonikelope/megadown"
+	echo -e "\nmegadown $VERSION - https://github.com/tonikelope/megadown"
 	echo -e "\ncli downloader for mega.nz and megacrypter"
 
 	echo -e "\nSingle url mode:           megadown ['URL'] [OPTION]...\n"
@@ -35,13 +35,11 @@ function showHelp {
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 
-	echo -e "\nMulti url mode:            megadown [-l URL_LIST_FILE] [OPTION]...\n"
-	echo -e "\tFile line format:          URL [optional_file_name]\n"
+	echo -e "\n\nMulti url mode:            megadown [-l URL_LIST_FILE] [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (500b, 500k, 2m)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
-
-	echo ''
+	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
 function check_deps {
@@ -52,14 +50,12 @@ function check_deps {
 		DL_BIN="curl"
 		DL_FAIL="--fail"
 		DL_QUIET="-s"
-		DL_HEADER="--header"
 		DL_POSTDATA="--data"
 		DL_OUTPUT_STDOUT=""
 	elif [ ! -z "$(command -v wget 2>&1)" ]; then
 		DL_BIN="wget"
 		DL_FAIL=""
 		DL_QUIET="-q"
-		DL_HEADER="--header"
 		DL_POSTDATA="--post-data"
 		DL_OUTPUT_STDOUT="-O -"
 	else
@@ -165,7 +161,7 @@ function get_mc_link_info {
 	
 	local DL_exit_code=1
 	
-	local info_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"info\", \"link\":\"$1\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
+	local info_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" --header 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"info\", \"link\":\"$1\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
 	
 	DL_exit_code=$?
 	
@@ -443,7 +439,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
 	fi
 	
-	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
+	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" --header 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
 	
 	DL_exit_code=$?
 	
@@ -480,7 +476,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	
 	DL_exit_code=$?
 	
-	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
+	mega_res_json=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" --header 'Content-Type: application/json' "$DL_POSTDATA" "$mega_req_json" "$DL_OUTPUT_STDOUT" "$mega_req_url")
 	
 	if [ "$DL_exit_code" -ne 0 ]; then
 		showError "Oooops, something went bad. EXIT CODE (${DL_exit_code})"
@@ -585,7 +581,7 @@ else
 	
 	hex_key=$(hrk2hk "$hex_raw_key")
 	
-	DL_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" "$DL_HEADER" 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
+	DL_link=$("$DL_BIN" "$DL_FAIL" "$DL_QUIET" --header 'Content-Type: application/json' "$DL_POSTDATA" "{\"m\":\"dl\", \"link\":\"$link\", \"noexpire\":\"$no_exp_token\"}" "$DL_OUTPUT_STDOUT" "$MC_API_URL")
 
 	DL_exit_code=$?
 	
@@ -610,9 +606,9 @@ else
 fi
 
 if [ -z "$speed" ]; then
-	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} ${DL_OUTPUT_STDOUT} "
+	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} ${DL_OUTPUT_STDOUT}"
 else
-	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} --limit-rate $speed ${DL_OUTPUT_STDOUT} "
+	DL_COMMAND="${DL_BIN} ${DL_FAIL} ${DL_QUIET} --limit-rate $speed ${DL_OUTPUT_STDOUT}"
 fi
 
 if [ "$output" == "-" ]; then
