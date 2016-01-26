@@ -43,10 +43,10 @@ function check_deps {
 
 	local dep_error=0
 
-	if [ ! -z "$(command -v curl 2>&1)" ]; then
+	if [ -n "$(command -v curl 2>&1)" ]; then
 		DL_COM="curl --fail -s"
 		DL_COM_PDATA="--data"
-	elif [ ! -z "$(command -v wget 2>&1)" ]; then
+	elif [ -n "$(command -v wget 2>&1)" ]; then
 		DL_COM="wget -q -O -"
 		DL_COM_PDATA="--post-data"
 	else
