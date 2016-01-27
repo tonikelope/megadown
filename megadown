@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.26"
+VERSION="1.9.27"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -133,7 +133,7 @@ function decrypt_md_link {
 		key="ED1F4C200B35139806B260563B3D3876F011B4750F3A1A4A5EFD0BBE67554B44"
 	fi
 
-	echo -n "https://mega.nz/#"$(echo -n $(urlb64_to_b64 "$data") | $OPENSSL_AES_CBC_256_DEC -K "$key" -iv "$iv")
+	echo -n "https://mega.nz/#"$(echo -n "$(urlb64_to_b64 "$data")" | $OPENSSL_AES_CBC_256_DEC -K "$key" -iv "$iv")
 }
 
 # 1:hex_raw_key
@@ -163,7 +163,7 @@ function get_mc_link_info {
 
 	if [ $(echo $info_link | grep '"error"') ]; then
 		local error_code=$($HELPERS json_param "$info_link" error)
-		echo -e "ERROR: MEGACRYPTER $error_code"
+		echo -e "MEGACRYPTER ERROR $error_code"
 		return 1
 	fi
 
@@ -247,13 +247,13 @@ function mc_pass_check {
 	
 	local iv=${array[3]}
 
-	local password="$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)"
+	local password=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
 
-	local mc_pass_hash="$($HELPERS PBKDF2 "$salt" "$password" $((2**$iter_log2)))"
+	local mc_pass_hash=$($HELPERS PBKDF2 "$salt" "$password" $((2**$iter_log2)))
 
-	mc_pass_hash="$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+	mc_pass_hash=$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 
-	iv="$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')"
+	iv=$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
 
 	if [ "$(echo -n "$key_check" | $OPENSSL_AES_CBC_256_DEC -K "$mc_pass_hash" -iv "$iv" 2>/dev/null | od -An -t x1 | tr -d '\n ')" != "$mc_pass_hash" ]; then
 		echo -n "0"
@@ -298,7 +298,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-p1="$(trim "$1")"
+p1=$(trim "$1")
 
 if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
 	link="$p1"
@@ -327,7 +327,7 @@ if [ -z "$link" ]; then
 	
 		showHelp
 		
-		showError "ERROR: MEGA link or --list parameter is required"
+		showError "ERROR: MEGA/MC link or --list parameter is required"
 		
 	elif [ ! -f "$list" ]; then
 	
@@ -439,16 +439,19 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi	
 
 	if [ $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+') ]; then
-		showError "ERROR: MEGA $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+')"
+		showError "MEGA ERROR $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+')"
 	fi
 
 	file_size=$($HELPERS json_param "$mega_res_json" s)
+	
 	at=$($HELPERS json_param "$mega_res_json" at)
+	
 	hex_key=$(hrk2hk "$hex_raw_key")
+	
 	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K "$hex_key" -iv "00000000000000000000000000000000" -nopad)
 
 	if [ ! $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]; then
-		showError "ERROR: MEGA bad link"
+		showError "MEGA bad link"
 	fi
 
 	if [ -z "$output" ]; then
@@ -581,9 +584,10 @@ else
 	fi	
 
 	if [ $(echo $dl_link | grep '"error"') ]; then
+		
 		error_code=$($HELPERS json_param "$dl_link" error)
 
-		showError "ERROR: MEGACRYPTER $error_code"
+		showError "MEGACRYPTER ERROR $error_code"
 	fi
 
 	dl_temp_url=$($HELPERS json_param "$dl_link" url)
@@ -616,12 +620,17 @@ echo -e "$DL_MSG"
 download_exit_code=1
 
 until [ "$download_exit_code" -eq 0 ]; do
+	
 	if [ -f "${file_name}.temp" ]; then
+		
 		echo -e "(Resuming previous download ...)\n"
 
 		temp_size=$(stat -c %s "${file_name}.temp")
+		
 		offset=$(($temp_size-$(($temp_size%16))))
+		
 		iv_forward=$(printf "%016x" $(($offset/16)))
+		
 		hex_iv="${hex_raw_key:32:16}$iv_forward"
 
 		truncate -s $offset "${file_name}.temp"
@@ -629,6 +638,7 @@ until [ "$download_exit_code" -eq 0 ]; do
 		$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
 	else
 		hex_iv="${hex_raw_key:32:16}0000000000000000"
+		
 		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
 	fi
 
@@ -636,7 +646,7 @@ until [ "$download_exit_code" -eq 0 ]; do
 
 	if [ "$download_exit_code" -ne 0 ]; then
 		showError "Oooops, download failed! EXIT CODE (${download_exit_code})"
-	fi	
+	fi
 done
 
 if [ ! -f "${file_name}.temp" ]; then
