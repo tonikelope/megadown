@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.28"
+VERSION="1.9.29"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -438,7 +438,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "Oooops, something went bad. EXIT CODE (${download_exit_code})"
 	fi
 
-	if [ $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+') ]; then
+	if [ $(echo -n "$mega_res_json" | grep -E -o '\[ *\-[0-9]+ *\]') ]; then
 		showError "MEGA ERROR $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+')"
 	fi
 
