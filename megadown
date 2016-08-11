@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.30"
+VERSION="1.9.31"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -251,11 +251,11 @@ function mc_pass_check {
 
 	local mc_pass_hash=$($HELPERS pbkdf2 "$salt" "$password" $((2**$iter_log2)))
 
-	mc_pass_hash=$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	mc_pass_hash=$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
-	iv=$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	iv=$(echo -n "$iv" | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
-	if [ "$(echo -n "$key_check" | $OPENSSL_AES_CBC_256_DEC -K "$mc_pass_hash" -iv "$iv" 2>/dev/null | od -An -t x1 | tr -d '\n ')" != "$mc_pass_hash" ]; then
+	if [ "$(echo -n "$key_check" | $OPENSSL_AES_CBC_256_DEC -K "$mc_pass_hash" -iv "$iv" 2>/dev/null | od -v -An -t x1 | tr -d '\n ')" != "$mc_pass_hash" ]; then
 		echo -n "0"
 	else
 		echo -n "${mc_pass_hash}#${iv}"
@@ -413,7 +413,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 	file_key=$(regex_match "^.*\/#.*?!.+!(.+)$" "$link" 1)
 
-	hex_raw_key=$(echo -n $(urlb64_to_b64 "$file_key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+	hex_raw_key=$(echo -n $(urlb64_to_b64 "$file_key") | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
 
@@ -562,13 +562,13 @@ else
 
 		iv=${array[1]}
 
-		hex_raw_key=$(echo -n "$key" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv" | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n "$key" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv" | od -v -An -t x1 | tr -d '\n ')
 
 		if [ -z "$output" ]; then
 			file_name=$(echo -n "$file_name" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 		fi
 	else
-		hex_raw_key=$(echo -n $(urlb64_to_b64 "$key") | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		hex_raw_key=$(echo -n $(urlb64_to_b64 "$key") | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 	fi
 
 	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5"
@@ -594,7 +594,7 @@ else
 
 	if [ "$mc_pass" != "0" ]; then
 
-		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -An -t x1 | tr -d '\n ')
+		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
 		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
