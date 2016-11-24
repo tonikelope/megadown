@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.31"
+VERSION="1.9.32"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -448,7 +448,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 	hex_key=$(hrk2hk "$hex_raw_key")
 
-	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K "$hex_key" -iv "00000000000000000000000000000000" -nopad)
+	at_dec_json=$(echo -n $(urlb64_to_b64 "$at") | $OPENSSL_AES_CBC_128_DEC -K "$hex_key" -iv "00000000000000000000000000000000" -nopad | tr -d '\0')
 
 	if [ ! $(echo -n "$at_dec_json" | grep -E -o 'MEGA') ]; then
 		showError "MEGA bad link"
