@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.32"
+VERSION="1.9.33"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -406,8 +406,6 @@ echo -e "\nReading link metadata..."
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 	#MEGA.CO.NZ LINK
-
-	link=${link//#!N?/#N!}
 
 	file_id=$(regex_match "^.*\/#.*?!(.+)!.*$" "$link" 1)
 
