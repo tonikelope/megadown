@@ -50,7 +50,7 @@ function check_deps {
 		DL_COM="wget -q -O -"
 		DL_COM_PDATA="--post-data"
 	else
-		echo -ne "\nwget OR curl is required and it's not installed"
+		echo "wget OR curl is required and it's not installed"
 		dep_error=1
 	fi
 
