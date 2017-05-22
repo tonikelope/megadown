@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.34"
+VERSION="1.9.35"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -58,7 +58,7 @@ function check_deps {
 
 		if [ -z "$(command -v "$i" 2>&1)" ]; then
 
-			echo -ne "\n[$i] is required and it's not installed"
+			echo "[$i] is required and it's not installed"
 			dep_error=1
 
 		else
@@ -73,7 +73,7 @@ function check_deps {
 
 						if [ -z "$(echo -n "$openssl_sup" | grep -o "$i" | head -n1)" ]; then
 
-							echo -n "Your openssl binary does not support ${i}"
+							echo "Your openssl binary does not support ${i}"
 							dep_error=1
 
 						fi
@@ -85,7 +85,7 @@ function check_deps {
 
 					if [[ "$(python --version 2>&1 | grep -o -E '[0-9]\.[0-9]')" < "$PYTHON_MIN_VER" ]]; then
 
-						echo -n "python >= ${PYTHON_MIN_VER} is required"
+						echo "python >= ${PYTHON_MIN_VER} is required"
 						dep_error=1
 
 					fi
@@ -96,7 +96,7 @@ function check_deps {
 	done
 
 	if [[ "$(echo -n "$BASH_VERSION" | grep -o -E "[0-9]+" | head -n1)" < "$BASH_MIN_VER" ]]; then
-		echo -n "bash >= ${BASH_MIN_VER} is required"
+		echo "bash >= ${BASH_MIN_VER} is required"
 		dep_error=1
 	fi
 
