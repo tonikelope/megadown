@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.36"
+VERSION="1.9.37"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -27,12 +27,12 @@ function showError {
 function showHelp {
 	echo -e "\nmegadown $VERSION - https://github.com/tonikelope/megadown"
 	echo -e "\ncli downloader for mega.nz and megacrypter"
-	echo -e "\nSingle url mode:           megadown ['URL'] [OPTION]...\n"
+	echo -e "\nSingle url mode:           megadown <'URL'> [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
-	echo -e "\n\nMulti url mode:          megadown [-l URL_LIST_FILE] [OPTION]...\n"
+	echo -e "\n\nMulti url mode:          megadown <-l URL_LIST_FILE> [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
