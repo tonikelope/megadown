@@ -33,13 +33,13 @@ function showHelp {
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 	echo -e "\t-q,\t--quiet               Quiet mode."
-	echo -e "\t-m,\t--metadata            Prints metadata and exits"
+	echo -e "\t-m,\t--metadata            Prints file metadata and exits. (File name is base64 encoded)."
 	echo -e "\n\nMulti url mode:          megadown <-l URL_LIST_FILE> [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 	echo -e "\t-q,\t--quiet               Quiet mode."
-	echo -e "\t-m,\t--metadata            Prints metadata and exits"
+	echo -e "\t-m,\t--metadata            Prints file metadata and exits. (File name is base64 encoded)."
 	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
