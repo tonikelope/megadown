@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.37"
+VERSION="1.9.38"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -32,10 +32,12 @@ function showHelp {
 	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
+	echo -e "\t-q,\t--quiet               Quiet mode."
 	echo -e "\n\nMulti url mode:          megadown <-l URL_LIST_FILE> [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
+	echo -e "\t-q,\t--quiet               Quiet mode."
 	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
@@ -304,7 +306,7 @@ if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
 	link="$p1"
 fi
 
-eval set -- "$(getopt -o "l:p:k:o:s:" -l "list:,password:,key:,output:,speed:" -- "$@")"
+eval set -- "$(getopt -o "l:p:k:o:s:q" -l "list:,password:,key:,output:,speed:,quiet" -- "$@")"
 
 while true; do
 	case "$1" in
@@ -312,6 +314,7 @@ while true; do
 		-p|--password) password="$2"; shift 2;;
 		-o|--output)   output="$2";   shift 2;;
 		-s|--speed)    speed="$2";    shift 2;;
+		-q|--quiet)    quiet=true;    shift 1;;
 
 		--) shift; break;;
 
@@ -336,7 +339,9 @@ if [ -z "$link" ]; then
 		showError "ERROR: list file ${list} not found"
 	fi
 
-	echo -ne "\n(Pre)reading mc links info..."
+	if [ ! $quiet ]; then
+		echo -ne "\n(Pre)reading mc links info..."
+	fi
 
 	link_count=0
 
@@ -401,7 +406,9 @@ if [ $(echo -n "$link" | grep -E -o 'mega://enc') ]; then
 	link=$(decrypt_md_link "$link")
 fi
 
-echo -e "\nReading link metadata..."
+if [ ! $quiet ]; then
+	echo -e "\nReading link metadata..."
+fi
 
 if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
@@ -613,7 +620,15 @@ if [ "$output" == "-" ]; then
 	exit 0
 fi
 
-echo -e "$DL_MSG"
+if [ ! $quiet ]; then
+	echo -e "$DL_MSG"
+fi
+
+if [ ! $quiet ]; then
+	PV_CMD="pv"
+else
+	PV_CMD="pv -q"
+fi
 
 download_exit_code=1
 
@@ -633,11 +648,11 @@ until [ "$download_exit_code" -eq 0 ]; do
 
 		truncate -s $offset "${file_name}.temp"
 
-		$DL_COMMAND "$dl_temp_url/$offset" | pv -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
+		$DL_COMMAND "$dl_temp_url/$offset" | $PV_CMD -s $(($file_size-$offset)) | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" >> "${file_name}.temp"
 	else
 		hex_iv="${hex_raw_key:32:16}0000000000000000"
 
-		$DL_COMMAND "$dl_temp_url" | pv -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
+		$DL_COMMAND "$dl_temp_url" | $PV_CMD -s $file_size | $OPENSSL_AES_CTR_128_DEC -K "$hex_key" -iv "$hex_iv" > "${file_name}.temp"
 	fi
 
 	download_exit_code=${PIPESTATUS[0]}
@@ -657,6 +672,8 @@ if [ -f ".megadown/${md5}" ];then
 	rm ".megadown/${md5}"
 fi
 
-echo -e "\nFILE DOWNLOADED!\n"
+if [ ! $quiet ]; then
+	echo -e "\nFILE DOWNLOADED!\n"
+fi
 
 exit 0
