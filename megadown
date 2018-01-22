@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.38"
+VERSION="1.9.39"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -33,11 +33,13 @@ function showHelp {
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 	echo -e "\t-q,\t--quiet               Quiet mode."
+	echo -e "\t-m,\t--metadata            Prints metadata and exits"
 	echo -e "\n\nMulti url mode:          megadown <-l URL_LIST_FILE> [OPTION]...\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 	echo -e "\t-q,\t--quiet               Quiet mode."
+	echo -e "\t-m,\t--metadata            Prints metadata and exits"
 	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
@@ -306,7 +308,7 @@ if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
 	link="$p1"
 fi
 
-eval set -- "$(getopt -o "l:p:k:o:s:q" -l "list:,password:,key:,output:,speed:,quiet" -- "$@")"
+eval set -- "$(getopt -o "l:p:k:o:s:qm" -l "list:,password:,key:,output:,speed:,quiet,metadata" -- "$@")"
 
 while true; do
 	case "$1" in
@@ -315,6 +317,7 @@ while true; do
 		-o|--output)   output="$2";   shift 2;;
 		-s|--speed)    speed="$2";    shift 2;;
 		-q|--quiet)    quiet=true;    shift 1;;
+        -m|--metadata) metadata=true; shift 1;;
 
 		--) shift; break;;
 
@@ -603,6 +606,11 @@ else
 
 		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
+fi
+
+if [ $metadata ]; then
+	echo -n $(echo -n "$file_name" | base64 -i)"|${file_size}"
+	exit 0
 fi
 
 if [ -z "$speed" ]; then
