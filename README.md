@@ -32,8 +32,6 @@ Single url mode:            megadown ['URL'] [OPTION]...
 
 Multi url mode:             megadown [-l URL_LIST_FILE] [OPTION]...
 
-	File line format:         URL [optional_file_name]
-
 	Options explanation:
 	-s,     --speed SPEED         Download speed limit (integer values: 500B, 500K, 2M).
         -p,     --password PASSWORD   Password for MegaCrypter links (same for every link in a list).
