@@ -14,9 +14,12 @@ Bash script for download files from mega.nz and megacrypter
 
  * Bash >= 3
  * OpenSSL with support for AES 128 CTR and AES 128/256 CBC (crypto stuff)
- * python >= 2.6 (JSON parsing and MC password protected links)
  * wget/curl (downloading (curl is preferred if it's present))
  * pv (monitor the progress of data)
+ * jq (JSON parser)
+
+### Optional:
+ * python >= 2.6 (MegaCrypter password protected links)
 
 ## Usage:
 

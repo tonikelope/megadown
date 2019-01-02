@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.39"
+VERSION="1.9.40"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -58,7 +58,7 @@ function check_deps {
 		dep_error=1
 	fi
 
-	for i in openssl python pv; do
+	for i in openssl pv jq; do
 
 		if [ -z "$(command -v "$i" 2>&1)" ]; then
 
@@ -84,20 +84,14 @@ function check_deps {
 
 					done
 				;;
-
-				python)
-
-					if [[ "$(python --version 2>&1 | grep -o -E '[0-9]\.[0-9]')" < "$PYTHON_MIN_VER" ]]; then
-
-						echo "python >= ${PYTHON_MIN_VER} is required"
-						dep_error=1
-
-					fi
-				;;
 			esac
 		fi
 
 	done
+
+	if [ -z "$(command -v python 2>&1)" ]; then
+		echo "WARNING: python is required for MegaCrypter password protected links and it's not installed."
+	fi
 
 	if [[ "$(echo -n "$BASH_VERSION" | grep -o -E "[0-9]+" | head -n1)" < "$BASH_MIN_VER" ]]; then
 		echo "bash >= ${BASH_MIN_VER} is required"
@@ -166,14 +160,14 @@ function get_mc_link_info {
 	fi
 
 	if [ $(echo $info_link | grep '"error"') ]; then
-		local error_code=$($HELPERS json_param "$info_link" error)
+		local error_code=$(echo "$info_link" | jq -r .error)
 		echo -e "MEGACRYPTER ERROR $error_code"
 		return 1
 	fi
 
-	local expire=$($HELPERS json_param "$info_link" expire)
+	local expire=$(echo "$info_link" | jq -r .expire)
 
-	if [ "$expire" != "0" ]; then
+	if [ "$expire" != "false" ]; then
 
 		IFS='#' read -a array <<< "$expire"
 
@@ -182,19 +176,19 @@ function get_mc_link_info {
 		local no_exp_token="$expire"
 	fi
 
-	local file_name=$(echo -n $($HELPERS json_param "$info_link" name) | base64 -w 0 -i 2>/dev/null)
+	local file_name=$(echo "$info_link" | jq -r .name | base64 -w 0 -i 2>/dev/null)
 
-	local path=$(echo -n $($HELPERS json_param "$info_link" path))
+	local path=$(echo "$info_link" | jq -r .path)
 
-	if [ "$path" != "0" ]; then
+	if [ "$path" != "false" ]; then
 		path=$(echo -n "$path" | base64 -w 0 -i 2>/dev/null)
 	fi
 
-	local mc_pass=$($HELPERS json_param "$info_link" pass)
+	local mc_pass=$(echo "$info_link" | jq -r .pass)
 
-	local file_size=$($HELPERS json_param "$info_link" size)
+	local file_size=$(echo "$info_link" | jq -r .size)
 
-	local key=$($HELPERS json_param "$info_link" key)
+	local key=$(echo "$info_link" | jq -r .key)
 
 	echo -n "${file_name}@${path}@${file_size}@${mc_pass}@${key}@${no_exp_token}"
 }
@@ -238,6 +232,12 @@ function format_file_size {
 	echo -ne "$file_size_f"
 }
 
+# 1:password 2:salt 3:iterations
+function mc_pbkdf2 {
+
+	echo -e "import sys,hashlib,base64\nprint(base64.b64encode(hashlib.pbkdf2_hmac('sha256', b'${1}', base64.b64decode(b'${2}'), ${3})).decode())" | python
+}
+
 # 1:mc_pass_info 2:pass_to_check
 function mc_pass_check {
 
@@ -251,9 +251,7 @@ function mc_pass_check {
 
 	local iv=${array[3]}
 
-	local password=$(echo -n "$2" | base64 -w 0 -i 2>/dev/null)
-
-	local mc_pass_hash=$($HELPERS pbkdf2 "$salt" "$password" $((2**$iter_log2)))
+	local mc_pass_hash=$(mc_pbkdf2 "$password" "$salt" $((2**$iter_log2)))
 
 	mc_pass_hash=$(echo -n "$mc_pass_hash" | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
@@ -450,9 +448,9 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "MEGA ERROR $(echo -n "$mega_res_json" | grep -E -o '\-[0-9]+')"
 	fi
 
-	file_size=$($HELPERS json_param "$mega_res_json" s)
+	file_size=$(echo "$mega_res_json" | jq -r .s)
 
-	at=$($HELPERS json_param "$mega_res_json" at)
+	at=$(echo "$mega_res_json" | jq -r .at)
 
 	hex_key=$(hrk2hk "$hex_raw_key")
 
@@ -463,7 +461,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi
 
 	if [ -z "$output" ]; then
-		file_name=$($HELPERS json_param "$(echo -n "$at_dec_json" | grep -E -o '\{.+\}')" n)
+		file_name=$(echo -n "$at_dec_json" | grep -E -o '\{.+\}' | jq -r .n)
 	else
 		file_name="$output"
 	fi
@@ -484,7 +482,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		showError "Oooops, something went bad. EXIT CODE (${download_exit_code})"
 	fi
 
-	dl_temp_url=$($HELPERS json_param "$mega_res_json" g)
+	dl_temp_url=$(echo "$mega_res_json" | jq -r .g)
 else
 
 	#MEGACRYPTER LINK
@@ -516,7 +514,7 @@ else
 
 	path=${array[1]}
 
-	if [ "$path" != "0" ]; then
+	if [ "$path" != "false" ]; then
 		path=$(echo -n "$path" | base64 -d -i 2>/dev/null)
 	fi
 
@@ -528,7 +526,7 @@ else
 
 	no_exp_token=${array[5]}
 
-	if [ "$path" != "0" ] && [ "$path" != "" ]; then
+	if [ "$path" != "false" ] && [ "$path" != "" ]; then
 
 		if [ ! -d "$path" ]; then
 
@@ -538,7 +536,14 @@ else
 		file_name="${path}${file_name}"
 	fi
 
-	if [ "$mc_pass" != "0" ]; then
+	if [ "$mc_pass" != "false" ]; then
+
+		if [ -z "$(command -v python 2>&1)" ]; then
+
+			echo "ERROR: python is required for MegaCrypter password protected links and it's not installed."
+			exit
+
+		fi
 
 		echo -ne "\nLink is password protected. "
 
@@ -556,7 +561,7 @@ else
 
 			pass_hash=$(mc_pass_check "$mc_pass" "$pass")
 
-			until [ "$pass_hash" != "0" ]; do
+			until [ "$pass_hash" != "false" ]; do
 				read -e -p "Wrong password! Try again: " pass
 				pass_hash=$(mc_pass_check "$mc_pass" "$pass")
 			done
@@ -593,16 +598,16 @@ else
 
 	if [ $(echo $dl_link | grep '"error"') ]; then
 
-		error_code=$($HELPERS json_param "$dl_link" error)
+		error_code=$(echo "$dl_link" | jq -r .error)
 
 		showError "MEGACRYPTER ERROR $error_code"
 	fi
 
-	dl_temp_url=$($HELPERS json_param "$dl_link" url)
+	dl_temp_url=$(echo "$dl_link" | jq -r .url)
 
-	if [ "$mc_pass" != "0" ]; then
+	if [ "$mc_pass" != "false" ]; then
 
-		iv=$(echo -n $($HELPERS json_param "$dl_link" pass) | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
+		iv=$(echo "$dl_link" | jq -r .pass | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 
 		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
