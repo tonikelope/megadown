@@ -6,11 +6,11 @@ Bash script for download files from MEGA.NZ and MegaCrypter
 
  * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported
  * Resume previous downloads
- * MC password protected links supported
  * Download files from list
  * Speed limit
+ * MC password protected links supported
 
-## Dependencies:
+## Required dependencies:
 
  * Bash >= 3
  * OpenSSL with support for AES 128 CTR and AES 128/256 CBC
@@ -18,7 +18,7 @@ Bash script for download files from MEGA.NZ and MegaCrypter
  * pv (monitor the progress of data)
  * jq (JSON parser)
 
-### Optional:
+## Optional dependencies:
  * python >= 2.7.8 (PBKDF2 -> MegaCrypter password protected links)
 
 ## Usage:
