@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.42"
+VERSION="1.9.43"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -305,7 +305,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-p1=$(urldecode $(trim "$1"))
+p1=$(trim $(urldecode "$1"))
 
 if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
 	link="$p1"
@@ -492,7 +492,7 @@ else
 
 	#MEGACRYPTER LINK
 
-	MC_API_URL=$(echo -n "$1" | grep -i -E -o 'https?://[^/]+')"/api"
+	MC_API_URL=$(echo -n "$link" | grep -i -E -o 'https?://[^/]+')"/api"
 
 	md5=$(echo -n "$link" | $OPENSSL_MD5 | grep -E -o '[0-9a-f]{32}')
 
