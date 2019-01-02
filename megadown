@@ -1,12 +1,10 @@
 #!/bin/bash
 
-VERSION="1.9.41"
+VERSION="1.9.42"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
-HELPERS="$HERE/helpers.py"
 BASH_MIN_VER="3"
-PYTHON_MIN_VER="2.6"
 
 MEGA_API_URL="https://g.api.mega.co.nz"
 OPENSSL_AES_CTR_128_DEC="openssl enc -d -aes-128-ctr"
