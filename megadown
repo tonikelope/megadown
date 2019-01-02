@@ -541,7 +541,7 @@ else
 		if [ -z "$(command -v python 2>&1)" ]; then
 
 			echo "ERROR: python is required for MegaCrypter password protected links and it's not installed."
-			exit
+			exit 1
 
 		fi
 
