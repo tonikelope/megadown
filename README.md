@@ -46,3 +46,4 @@ Multi url mode:             megadown [-l URL_LIST_FILE] [OPTION]...
 
 ## TO DO:
 * /#F! links
+* Allow to use Mega PRO account for download
