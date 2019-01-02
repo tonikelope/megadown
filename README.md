@@ -1,25 +1,25 @@
 # megadown
 
-Bash script for download files from mega.nz and megacrypter
+Bash script for download files from MEGA.NZ and MegaCrypter.
 
 ## Features:
 
- * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported
- * Resume previous downloads
- * MC password protected links supported
- * Download files from list
- * Speed limit
+ * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported.
+ * Resume previous downloads.
+ * Download files from list.
+ * Speed limit.
+ * MC password protected links supported.
 
-## Dependencies:
+## Required dependencies:
 
  * Bash >= 3
- * OpenSSL with support for AES 128 CTR and AES 128/256 CBC (crypto stuff)
- * wget/curl (downloading (curl is preferred if it's present))
- * pv (monitor the progress of data)
- * jq (JSON parser)
+ * OpenSSL (with support for AES 128 CTR and AES 128/256 CBC).
+ * wget/curl (curl is preferred if it's present).
+ * pv (monitor the progress of data).
+ * jq (JSON parser).
 
-### Optional:
- * python >= 2.6 (MegaCrypter password protected links)
+## Optional dependencies:
+ * python >= 2.7.8 (PBKDF2 -> MegaCrypter password protected links).
 
 ## Usage:
 
@@ -43,3 +43,6 @@ Multi url mode:             megadown [-l URL_LIST_FILE] [OPTION]...
         File line format:          URL [optional_file_name]
 
 ```
+
+## TO DO:
+* /#F! links
