@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.40"
+VERSION="1.9.41"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -101,6 +101,13 @@ function check_deps {
 	if [ $dep_error -ne 0 ]; then
 		showError "ERROR: there are dependencies not present!"
 	fi
+}
+
+
+# 2:url
+function urldecode {
+
+	: "${*//+/ }"; echo -e "${_//%/\\x}"; 
 }
 
 # 1:b64_encoded_string
@@ -300,7 +307,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-p1=$(trim "$1")
+p1=$(urldecode $(trim "$1"))
 
 if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
 	link="$p1"
