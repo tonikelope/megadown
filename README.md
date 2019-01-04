@@ -43,7 +43,3 @@ Multi url mode:             megadown [-l URL_LIST_FILE] [OPTION]...
         File line format:          URL [optional_file_name]
 
 ```
-
-## TO DO:
-* /#F! links
-* Allow to download using a proxy list
