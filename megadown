@@ -32,7 +32,7 @@ function showHelp {
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 	echo -e "\t-q,\t--quiet               Quiet mode."
 	echo -e "\t-m,\t--metadata            Prints file metadata in JSON format and exits."
-	echo -e "\n\nMulti url mode:          megadown [OPTION]... -l|--list FILE_LIST\n"
+	echo -e "\n\nMulti url mode:          megadown [OPTION]... -l|--list FILE\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
