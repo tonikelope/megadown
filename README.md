@@ -33,6 +33,7 @@ Single url mode:            megadown [OPTION]... 'URL'
 	-q,     --quiet               Quiet mode.
         -m,     --metadata            Prints file metadata in JSON format and exits.
 
+
 Multi url mode:             megadown [OPTION]... -l|--list FILE
 
 	Options explanation:
