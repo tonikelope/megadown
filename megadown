@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.43"
+VERSION="1.9.44"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -25,19 +25,19 @@ function showError {
 function showHelp {
 	echo -e "\nmegadown $VERSION - https://github.com/tonikelope/megadown"
 	echo -e "\ncli downloader for mega.nz and megacrypter"
-	echo -e "\nSingle url mode:           megadown <'URL'> [OPTION]...\n"
+	echo -e "\nSingle url mode:           megadown [OPTION]... 'URL'\n"
 	echo -e "\tOptions:"
 	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 	echo -e "\t-q,\t--quiet               Quiet mode."
-	echo -e "\t-m,\t--metadata            Prints file metadata and exits. (File name is base64 encoded)."
-	echo -e "\n\nMulti url mode:          megadown <-l URL_LIST_FILE> [OPTION]...\n"
+	echo -e "\t-m,\t--metadata            Prints file metadata in JSON format and exits."
+	echo -e "\n\nMulti url mode:          megadown [OPTION]... -l|--list FILE_LIST\n"
 	echo -e "\tOptions:"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 	echo -e "\t-q,\t--quiet               Quiet mode."
-	echo -e "\t-m,\t--metadata            Prints file metadata and exits. (File name is base64 encoded)."
+	echo -e "\t-m,\t--metadata            Prints file metadata in JSON format and exits."
 	echo -e "\tFile line format:          URL [optional_file_name]\n"
 }
 
@@ -305,13 +305,7 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-p1=$(trim $(urldecode "$1"))
-
-if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
-	link="$p1"
-fi
-
-eval set -- "$(getopt -o "l:p:k:o:s:qm" -l "list:,password:,key:,output:,speed:,quiet,metadata" -- "$@")"
+eval set -- "$(getopt -o "l:p:k:o:s:qm" -l "list:,password:,key:,output:,speed:,quiet,metadata" -n ${0} -- "$@")"
 
 while true; do
 	case "$1" in
@@ -329,6 +323,12 @@ while true; do
 			exit 1;;
 	esac
 done
+
+p1=$(trim $(urldecode "$1"))
+
+if [[ "$p1" =~ ^http ]] || [[ "$p1" =~ ^mega:// ]]; then
+	link="$p1"
+fi
 
 if [ -z "$link" ]; then
 
@@ -471,6 +471,11 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		file_name="$output"
 	fi
 
+	if [ $metadata ]; then
+		echo "{\"file_name\" : \"${file_name}\", \"file_size\" : ${file_size}}"
+		exit 0
+	fi
+
 	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")"
 
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
@@ -531,16 +536,6 @@ else
 
 	no_exp_token=${array[5]}
 
-	if [ "$path" != "false" ] && [ "$path" != "" ]; then
-
-		if [ ! -d "$path" ]; then
-
-			mkdir -p "$path"
-		fi
-
-		file_name="${path}${file_name}"
-	fi
-
 	if [ "$mc_pass" != "false" ]; then
 
 		if [ -z "$(command -v python 2>&1)" ]; then
@@ -589,6 +584,21 @@ else
 		hex_raw_key=$(echo -n $(urlb64_to_b64 "$key") | base64 -d -i 2>/dev/null | od -v -An -t x1 | tr -d '\n ')
 	fi
 
+	if [ $metadata ]; then
+		echo "{\"file_name\" : \"${file_name}\", \"file_size\" : ${file_size}}"
+		exit 0
+	fi
+
+	if [ "$path" != "false" ] && [ "$path" != "" ]; then
+
+		if [ ! -d "$path" ]; then
+
+			mkdir -p "$path"
+		fi
+
+		file_name="${path}${file_name}"
+	fi
+
 	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")" "$md5"
 
 	hex_key=$(hrk2hk "$hex_raw_key")
@@ -616,11 +626,6 @@ else
 
 		dl_temp_url=$(echo -n "$dl_temp_url" | $OPENSSL_AES_CBC_256_DEC -K "$pass_hash" -iv "$iv")
 	fi
-fi
-
-if [ $metadata ]; then
-	echo -n $(echo -n "$file_name" | base64 -i)"|${file_size}"
-	exit 0
 fi
 
 if [ -z "$speed" ]; then
