@@ -27,11 +27,11 @@ Bash script for download files from MEGA.NZ and MegaCrypter.
 Single url mode:            megadown [OPTION]... 'URL'
 
 	Options explanation:
-	-o,	--output FILE_NAME    Store file with this name (.
+	-o,	--output FILE_NAME    Store file with this name.
 	-s,	--speed SPEED         Download speed limit (500b, 500k, 2m).
 	-p,	--password PASSWORD   Password for MegaCrypter links.
 	-q,     --quiet               Quiet mode.
-        -m,     --metadata            Prints file metadata and exits. (File name is base64 encoded).
+        -m,     --metadata            Prints file metadata in JSON format and exits.
 
 Multi url mode:             megadown [OPTION]... -l|--list FILE
 
@@ -39,7 +39,8 @@ Multi url mode:             megadown [OPTION]... -l|--list FILE
 	-s,     --speed SPEED         Download speed limit (integer values: 500B, 500K, 2M).
         -p,     --password PASSWORD   Password for MegaCrypter links (same for every link in a list).
         -q,     --quiet               Quiet mode.
-        -m,     --metadata            Prints file metadata and exits. (File name is base64 encoded).
-        File line format:          URL [optional_file_name]
+        -m,     --metadata            Prints file metadata in JSON format and exits.
+        
+	File line format:             URL [optional_file_name]
 
 ```
