@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.45"
+VERSION="1.9.46"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -144,8 +144,7 @@ function hrk2hk {
 	declare -A hk
 	hk[0]=$(( 0x${1:0:16} ^ 0x${1:32:16} ))
 	hk[1]=$(( 0x${1:16:16} ^ 0x${1:48:16} ))
-
-	printf "%016x" ${hk[*]}
+	printf "%016x%016x" ${hk[0]} ${hk[1]}
 }
 
 # 1:link
