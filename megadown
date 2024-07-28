@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.9.46"
+VERSION="1.9.47"
 
 HERE=$(dirname "$0")
 SCRIPT=$(readlink -f "$0")
@@ -28,12 +28,14 @@ function showHelp {
 	echo -e "\nSingle url mode:           megadown [OPTION]... 'URL'\n"
 	echo -e "\tOptions:"
 	echo -e "\t-o,\t--output FILE_NAME    Store file with this name."
-	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
+	echo -e "\t-x,\t--proxy PROXY         Proxy (curl)"
+        echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links."
 	echo -e "\t-q,\t--quiet               Quiet mode."
 	echo -e "\t-m,\t--metadata            Prints file metadata in JSON format and exits."
 	echo -e "\n\nMulti url mode:          megadown [OPTION]... -l|--list FILE\n"
 	echo -e "\tOptions:"
+        echo -e "\t-x,\t--proxy PROXY         Proxy (curl)"
 	echo -e "\t-s,\t--speed SPEED         Download speed limit (integer values: 500B, 500K, 2M)."
 	echo -e "\t-p,\t--password PASSWORD   Password for MegaCrypter links (same for every link in a list)."
 	echo -e "\t-q,\t--quiet               Quiet mode."
@@ -46,7 +48,13 @@ function check_deps {
 	local dep_error=0
 
 	if [ -n "$(command -v curl 2>&1)" ]; then
-		DL_COM="curl --fail -s"
+		
+		if [ -z $proxy ]; then
+			DL_COM="curl --fail -s"
+		else
+			DL_COM="curl --proxy ${proxy} --fail -s"
+		fi
+		
 		DL_COM_PDATA="--data"
 	elif [ -n "$(command -v wget 2>&1)" ]; then
 		DL_COM="wget -q -O -"
@@ -87,7 +95,7 @@ function check_deps {
 
 	done
 
-	if [ -z "$(command -v python 2>&1)" ]; then
+	if [ -z "$(command -v python3 2>&1)" ]; then
 		echo "WARNING: python is required for MegaCrypter password protected links and it's not installed."
 	fi
 
@@ -297,23 +305,23 @@ function regex_imatch {
 }
 
 #MAIN STARTS HERE:
-check_deps
 
 if [ -z "$1" ]; then
 	showHelp
 	exit 1
 fi
 
-eval set -- "$(getopt -o "l:p:k:o:s:qm" -l "list:,password:,key:,output:,speed:,quiet,metadata" -n ${0} -- "$@")"
+eval set -- "$(getopt -o "x:l:p:k:o:s:qm" -l "proxy:,list:,password:,key:,output:,speed:,quiet,metadata" -n ${0} -- "$@")"
 
 while true; do
 	case "$1" in
+                -x|--proxy)    proxy="$2";    shift 2;;
 		-l|--list)     list="$2";     shift 2;;
 		-p|--password) password="$2"; shift 2;;
 		-o|--output)   output="$2";   shift 2;;
 		-s|--speed)    speed="$2";    shift 2;;
 		-q|--quiet)    quiet=true;    shift 1;;
-        -m|--metadata) metadata=true; shift 1;;
+                -m|--metadata) metadata=true; shift 1;;
 
 		--) shift; break;;
 
@@ -322,6 +330,8 @@ while true; do
 			exit 1;;
 	esac
 done
+
+check_deps
 
 p1=$(trim $(urldecode "$1"))
 
@@ -429,7 +439,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 		mega_req_json="[{\"a\":\"g\", \"p\":\"${file_id}\"}]"
 
-		mega_req_url="${MEGA_API_URL}/cs?id=&ak="
+		mega_req_url="${MEGA_API_URL}/cs?id=&v=3&lang=es&domain=meganz"
 
 	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
 
@@ -437,7 +447,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 		folder_id=$(regex_match "###n\=(.+)$" "$link" 1)
 
-		mega_req_url="${MEGA_API_URL}/cs?id=&ak=&n=${folder_id}"
+		mega_req_url="${MEGA_API_URL}/cs?id=&v=3&lang=es&domain=meganz&n=${folder_id}"
 	fi
 
 	mega_res_json=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "$mega_req_json" "$mega_req_url")
