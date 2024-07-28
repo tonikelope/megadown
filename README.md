@@ -24,24 +24,29 @@ Bash script for download files and get metadata from mega.nz and megacrypter lin
 ## Usage:
 
 ```bash
-Single url mode:            megadown [OPTION]... 'URL'
+megadown 1.9.47 - https://github.com/tonikelope/megadown
 
-	Options explanation:
-	-o,	--output FILE_NAME    Store file with this name.
-	-s,	--speed SPEED         Download speed limit (500b, 500k, 2m).
-	-p,	--password PASSWORD   Password for MegaCrypter links.
-	-q,     --quiet               Quiet mode.
+cli downloader for mega.nz and megacrypter
+
+Single url mode:           megadown [OPTION]... 'URL'
+
+        Options:
+        -o,     --output FILE_NAME    Store file with this name.
+        -x,     --proxy PROXY         Proxy (curl)
+        -s,     --speed SPEED         Download speed limit (integer values: 500B, K, 2M).
+        -p,     --password PASSWORD   Password for MegaCrypter links.
+        -q,     --quiet               Quiet mode.
         -m,     --metadata            Prints file metadata in JSON format and exits.
 
 
-Multi url mode:             megadown [OPTION]... -l|--list FILE
+Multi url mode:          megadown [OPTION]... -l|--list FILE
 
-	Options explanation:
-	-s,     --speed SPEED         Download speed limit (integer values: 500B, 500K, 2M).
+        Options:
+        -x,     --proxy PROXY         Proxy (curl)
+        -s,     --speed SPEED         Download speed limit (integer values: 500B, 500K, 2M).
         -p,     --password PASSWORD   Password for MegaCrypter links (same for every link in a list).
         -q,     --quiet               Quiet mode.
         -m,     --metadata            Prints file metadata in JSON format and exits.
-        
-	File line format:             URL [optional_file_name]
+        File line format:          URL [optional_file_name]
 
 ```
