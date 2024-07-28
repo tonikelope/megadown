@@ -1,9 +1,9 @@
 # megadown
 
-Bash script for download files from MEGA.NZ and MegaCrypter.
+Bash script for download files and get metadata from mega.nz and megacrypter links.
 
 ## Features:
-
+ * Retrieve metadata (filename and filesize) from any mega/megacrypter link without download.
  * /#!, /#N!, mega://enc?, mega://enc2 and ANY megacrypter clon link supported.
  * Resume previous downloads.
  * Download files from list.
