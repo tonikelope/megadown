@@ -439,7 +439,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 		mega_req_json="[{\"a\":\"g\", \"p\":\"${file_id}\"}]"
 
-		mega_req_url="${MEGA_API_URL}/cs?id="$(date +'%s')"&v=3&lang=es&domain=meganz"
+		mega_req_url="${MEGA_API_URL}/cs?id="$(date +'%s%N')"&v=3&lang=es&domain=meganz"
 
 	elif [ $(echo -n "$link" | grep -E -o -i 'mega(\.co)?\.nz/#N!') ]; then
 
@@ -447,7 +447,7 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 
 		folder_id=$(regex_match "###n\=(.+)$" "$link" 1)
 
-		mega_req_url="${MEGA_API_URL}/cs?id="$(date +'%s')"&v=3&lang=es&domain=meganz&n=${folder_id}"
+		mega_req_url="${MEGA_API_URL}/cs?id="$(date +'%s%N')"&v=3&lang=es&domain=meganz&n=${folder_id}"
 	fi
 
 	mega_res_json=$($DL_COM --header 'Content-Type: application/json' $DL_COM_PDATA "$mega_req_json" "$mega_req_url")
