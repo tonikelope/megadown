@@ -480,11 +480,6 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 		file_name="$output"
 	fi
 
-	if [ $metadata ]; then
-		echo "{\"file_name\" : \"${file_name}\", \"file_size\" : ${file_size}}"
-		exit 0
-	fi
-
 	check_file_exists "$file_name" "$file_size" "$(format_file_size "$file_size")"
 
 	if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz/#!') ]; then
@@ -502,6 +497,12 @@ if [ $(echo -n "$link" | grep -E -o 'mega(\.co)?\.nz') ]; then
 	fi
 
 	dl_temp_url=$(echo "$mega_res_json" | jq -r .[0].g)
+	
+	if [ $metadata ]; then
+		echo "{\"file_name\" : \"${file_name}\", \"file_size\" : ${file_size}, \"url\" : \"${dl_temp_url}\"}"
+		exit 0
+	fi
+
 else
 
 	#MEGACRYPTER LINK
